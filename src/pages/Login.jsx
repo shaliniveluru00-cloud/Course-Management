@@ -15,7 +15,10 @@ import {
 
 import "./Login.css";
 
-function Login() {
+function Login({ onLogin }) {
+
+  const [error, setError] = useState("");
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -24,25 +27,37 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
 
-  // Forgot password popup
   const [showForgotPopup, setShowForgotPopup] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin(e) {
-    e.preventDefault();
+  // CONNECT TO DJANGO BACKEND
+ async function handleLogin(e) {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    // Temporary login testing.
-    // Django backend will be connected later.
-
-    console.log({
-      username,
-      password,
-      role,
-      remember
+  try {
+    const res = await fetch("http://localhost:8000/api/auth/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, role }),
     });
+    const data = await res.json();
 
-    alert(`Login submitted for ${role}`);
+    if (!res.ok) {
+      setError(data.message || "Login failed");
+      return;
+    }
+
+    onLogin(data);
+  } catch {
+    setError("Cannot reach the server. Is the backend running?");
+  } finally {
+    setLoading(false);
   }
+}
 
+  // FORGOT PASSWORD POPUP
   function handleForgotPassword() {
     setShowForgotPopup(true);
   }
@@ -117,6 +132,7 @@ function Login() {
 
           <form onSubmit={handleLogin}>
 
+          {error && <div className="login-error">{error}</div>}
             {/* USERNAME */}
 
             <div className="input-group">
@@ -154,7 +170,9 @@ function Login() {
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={
+                  showPassword ? "Hide password" : "Show password"
+                }
               >
 
                 {showPassword ? (
@@ -234,21 +252,27 @@ function Login() {
 
 
               <button
-                 type="button"
-                  className="forgot-button"
-                onClick={() => setShowForgotPopup(true)}
-        >
-  Forgot Password?
-</button> 
+                type="button"
+                className="forgot-button"
+                onClick={handleForgotPassword}
+              >
+                Forgot Password?
+              </button>
 
             </div>
 
 
             {/* LOGIN BUTTON */}
 
-            <button type="submit" className="login-button">
+            <button
+              type="submit"
+              className="login-button"
+              disabled={loading}
+            >
 
-              <span>Login</span>
+              <span>
+                {loading ? "Logging in..." : "Login"}
+              </span>
 
               <ArrowRight size={22} />
 

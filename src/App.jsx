@@ -7,17 +7,24 @@ import Login from "./pages/Login";
 function LoginRoute() {
   const navigate = useNavigate();
 
-  function handleLogin(role) {
-    const route = role === "Student" ? "/student" : role === "Faculty" ? "/faculty" : "/admin";
-    navigate(route);
-  }
+ function handleLogin(data) {
+  localStorage.setItem("token", data.access);
+  localStorage.setItem("user", JSON.stringify(data.user));
 
+  const role = data.user.role;   // "STUDENT", "FACULTY" or "ADMIN"
+  const route = role === "STUDENT" ? "/student" : role === "FACULTY" ? "/faculty" : "/admin";
+  navigate(route);
+}
   return <Login onLogin={handleLogin} />;
 }
 
 function AppRoutes() {
   const navigate = useNavigate();
-  const handleLogout = () => navigate("/login");
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  navigate("/login");
+};
 
   return (
     <Routes>

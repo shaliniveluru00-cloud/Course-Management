@@ -594,10 +594,22 @@ input {
     gap: 12px;
   }
 }
+
+
 /* REMOVE OR SECTION */
 
 .login-bottom {
   display: none !important;
+}
+
+.login-error {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c2be;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 14px;
 }
 
 /* FORGOT PASSWORD POPUP */
