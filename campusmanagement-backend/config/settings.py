@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',      # lets the React frontend (another port) call this API
     # Our apps
     'accounts',
+    'courses',
 ]
 
 MIDDLEWARE = [
