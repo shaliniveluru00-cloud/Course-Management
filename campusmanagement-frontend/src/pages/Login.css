@@ -603,6 +603,8 @@ input {
 }
 
 .login-error {
+
+  
   background: #fdecea;
   color: #b3261e;
   border: 1px solid #f5c2be;

@@ -15,7 +15,7 @@ import Navbar from "../components/Navbar";
 
 import "./AdminDashboard.css";
 
-function AdminDashboard() {
+function AdminDashboard({onLogout}) {
   const [activeItem, setActiveItem] = useState("Dashboard");
 
   const stats = [
@@ -85,8 +85,7 @@ function AdminDashboard() {
 
   function handleNavigate(item) {
     if (item === "Logout") {
-      alert("Logout will be connected later.");
-      return;
+      return onLogout?.();
     }
 
     setActiveItem(item);

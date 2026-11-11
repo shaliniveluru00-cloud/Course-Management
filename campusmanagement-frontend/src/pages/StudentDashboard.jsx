@@ -21,11 +21,15 @@ const assignments = [
 function StudentDashboard({ onLogout }) {
 
   
- const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   const firstName = (user?.profile?.name ?? "").split(" ")[0];
 
   const [activeItem, setActiveItem] = useState("Dashboard");
   const [search, setSearch] = useState("");
+
+  const filteredAssignments = assignments.filter((item) =>
+    `${item.title} ${item.course}`.toLowerCase().includes(search.toLowerCase())
+  );
 
   function handleNavigate(item) {
     if (item === "Logout") return onLogout?.();

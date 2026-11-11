@@ -18,6 +18,16 @@ function LoginRoute() {
   return <Login onLogin={handleLogin} />;
 }
 
+// STEP 8: only lets the right role into a page
+function Protected({ role, children }) {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  // Not logged in, or logged in with a different role -> back to the login page
+  if (!user || user.role !== role) return <Navigate to="/login" replace />;
+
+  return children;
+}
+
 function AppRoutes() {
   const navigate = useNavigate();
   const handleLogout = () => {
@@ -30,9 +40,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginRoute />} />
-      <Route path="/student" element={<StudentDashboard onLogout={handleLogout} />} />
-      <Route path="/faculty" element={<FacultyDashboard onLogout={handleLogout} />} />
-      <Route path="/admin" element={<AdminDashboard onLogout={handleLogout} />} />
+      <Route path="/student" element={<Protected role="STUDENT"><StudentDashboard onLogout={handleLogout} /></Protected>} />
+      <Route path="/faculty" element={<Protected role="FACULTY"><FacultyDashboard onLogout={handleLogout} /></Protected>} />
+      <Route path="/admin" element={<Protected role="ADMIN"><AdminDashboard onLogout={handleLogout} /></Protected>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

@@ -16,6 +16,8 @@ const initialSubmissions = [
 ];
 
 function FacultyDashboard({ onLogout }) {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const firstName = (user?.profile?.name ?? "").split(" ")[0];
   const [activeItem, setActiveItem] = useState("Dashboard");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -42,7 +44,7 @@ function FacultyDashboard({ onLogout }) {
         <Navbar pageTitle={activeItem} role="Faculty" profileName="Dr. Priya Kumar"/>
         <div className="dashboard-content">
           {activeItem === "Dashboard" && <>
-            <section className="welcome-banner"><div><h1>Welcome back, Dr. Priya!</h1><p>Here's your teaching overview and what needs your attention.</p></div><div className="welcome-icon"><GraduationCap size={65}/></div></section>
+            <section className="welcome-banner"><div><h1>Welcome back, {firstName}!</h1><p>Here's your teaching overview and what needs your attention.</p></div><div className="welcome-icon"><GraduationCap size={65}/></div></section>
             <div className="stats-grid">
               <Stat icon={BookOpen} value="4" label="Assigned Courses"/>
               <Stat icon={Users} value="186" label="Total Students"/>
