@@ -17,6 +17,17 @@ const assignments = [
   { title: "SQL Queries – Lab 4", course: "Database Management", due: "Nov 12, 2026", status: "Submitted" },
   { title: "Graph Theory Worksheet", course: "Discrete Mathematics", due: "Nov 15, 2026", status: "Pending" }
 ];
+const grades = [
+  { name: "Data Structures – Quiz 2", course: "CS301", score: "18/20" },
+  { name: "DBMS – Lab Assessment", course: "CS305", score: "24/25" },
+  { name: "Discrete Math – Test 1", course: "MA202", score: "42/50" }
+];
+const scheduleItems = [
+  { time: "09:00 – 10:00", title: "Data Structures", room: "Block A · Room 204" },
+  { time: "11:00 – 12:00", title: "Database Management", room: "Block C · Lab 02" },
+  { time: "14:00 – 15:00", title: "Discrete Mathematics", room: "Block B · Room 105" }
+];
+const matches = (text, query) => text.toLowerCase().includes(query.trim().toLowerCase());
 
 function StudentDashboard({ onLogout }) {
 
@@ -27,9 +38,16 @@ function StudentDashboard({ onLogout }) {
   const [activeItem, setActiveItem] = useState("Dashboard");
   const [search, setSearch] = useState("");
 
+  const [courseSearch, setCourseSearch] = useState("");
+  const [gradeSearch, setGradeSearch] = useState("");
+  const [scheduleSearch, setScheduleSearch] = useState("");
+
   const filteredAssignments = assignments.filter((item) =>
     `${item.title} ${item.course}`.toLowerCase().includes(search.toLowerCase())
   );
+  const filteredCourses = courses.filter((c) => matches(`${c.code} ${c.name} ${c.faculty}`, courseSearch));
+  const filteredGrades = grades.filter((g) => matches(`${g.name} ${g.course}`, gradeSearch));
+  const filteredSchedule = scheduleItems.filter((s) => matches(`${s.title} ${s.room} ${s.time}`, scheduleSearch));
 
   function handleNavigate(item) {
     if (item === "Logout") return onLogout?.();
@@ -70,11 +88,11 @@ function StudentDashboard({ onLogout }) {
             </div>
           </>}
 
-          {activeItem === "My Courses" && <section className="dashboard-panel role-panel"><PanelHeading title="My Courses" subtitle="All courses you are enrolled in"/><CourseGrid /></section>}
+          {activeItem === "My Courses" && <section className="dashboard-panel role-panel"><PanelHeading title="My Courses" subtitle="All courses you are enrolled in"/><SearchRow count={filteredCourses.length} noun="courses" value={courseSearch} onChange={setCourseSearch} placeholder="Search courses..." /><CourseGrid items={filteredCourses} /></section>}
           {activeItem === "Assignments" && <section className="dashboard-panel role-panel"><PanelHeading title="Assignments" subtitle="Search and track your coursework"/><div className="role-search-row"><span>{filteredAssignments.length} assignments</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search assignments..." aria-label="Search assignments" /></div><AssignmentTable items={filteredAssignments} /></section>}
-          {activeItem === "Grades" && <GradesPanel />}
+          {activeItem === "Grades" && <GradesPanel items={filteredGrades} searchValue={gradeSearch} onSearchChange={setGradeSearch} />}
           {activeItem === "Attendance" && <section className="dashboard-panel role-panel"><PanelHeading title="Attendance Overview" subtitle="Your attendance this semester"/><div className="role-attendance"><strong>92%</strong><span>Overall attendance</span><CheckCircle2 size={28}/></div><p className="role-note">You are meeting the minimum attendance requirement of 75%.</p></section>}
-          {activeItem === "Schedule" && <SchedulePanel full />}
+          {activeItem === "Schedule" && <SchedulePanel full items={filteredSchedule} searchValue={scheduleSearch} onSearchChange={setScheduleSearch} />}
           {activeItem === "Announcements" && <section className="dashboard-panel role-panel"><PanelHeading title="Announcements" subtitle="Latest updates from your campus"/><Announcement title="Mid-semester examination timetable published" detail="Check the examination section for updated dates and room details."/><Announcement title="Project review submissions" detail="Submit your project synopsis before the department deadline."/></section>}
           {activeItem === "Settings" && <section className="dashboard-panel role-panel"><PanelHeading title="Settings" subtitle="Student account preferences"/><p className="role-note">Your profile and notification preferences will be available here.</p></section>}
         </div>
@@ -89,18 +107,22 @@ function Stat({ icon: Icon, value, label }) {
 function PanelHeading({ title, subtitle, action, onAction }) {
   return <div className="panel-heading"><div><h3>{title}</h3><p>{subtitle}</p></div>{action && <button className="view-button" onClick={onAction}>{action}</button>}</div>;
 }
-function CourseGrid() {
-  return <div className="role-course-grid">{courses.map((course, index) => <article className="role-course-card" key={course.code}><div className={`role-course-icon tone-${index}`}><BookOpen size={21}/></div><span className="role-course-code">{course.code}</span><h3>{course.name}</h3><p>{course.faculty}</p><div className="role-progress-label"><span>Course progress</span><strong>{course.progress}%</strong></div><div className="role-progress"><span style={{width: `${course.progress}%`}}/></div></article>)}</div>;
+function SearchRow({ count, noun, value, onChange, placeholder }) {
+  return <div className="role-search-row"><span>{count} {noun}</span><input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder} /></div>;
+}
+function CourseGrid({ items = courses }) {
+  if (items.length === 0) return <p className="role-note">No courses found.</p>;
+  return <div className="role-course-grid">{items.map((course, index) => <article className="role-course-card" key={course.code}><div className={`role-course-icon tone-${index}`}><BookOpen size={21}/></div><span className="role-course-code">{course.code}</span><h3>{course.name}</h3><p>{course.faculty}</p><div className="role-progress-label"><span>Course progress</span><strong>{course.progress}%</strong></div><div className="role-progress"><span style={{width: `${course.progress}%`}}/></div></article>)}</div>;
 }
 function AssignmentTable({ items }) {
   return <div className="activity-table-wrapper"><table className="activity-table role-table"><thead><tr><th>Assignment</th><th>Course</th><th>Due Date</th><th>Status</th></tr></thead><tbody>{items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.course}</td><td><span className="role-due"><Clock3 size={14}/>{item.due}</span></td><td><span className={`activity-status ${item.status === "Submitted" ? "completed" : "pending"}`}>{item.status}</span></td></tr>)}</tbody></table></div>;
 }
-function GradesPanel({ onView }) {
-  return <section className="dashboard-panel role-panel"><PanelHeading title="Recent Grades" subtitle="Your latest academic performance" action={onView ? "View report" : undefined} onAction={onView}/><div className="role-grade-list"><Grade name="Data Structures – Quiz 2" course="CS301" score="18/20"/><Grade name="DBMS – Lab Assessment" course="CS305" score="24/25"/><Grade name="Discrete Math – Test 1" course="MA202" score="42/50"/></div></section>;
+function GradesPanel({ onView, items = grades, searchValue, onSearchChange }) {
+  return <section className="dashboard-panel role-panel"><PanelHeading title="Recent Grades" subtitle="Your latest academic performance" action={onView ? "View report" : undefined} onAction={onView}/>{onSearchChange && <SearchRow count={items.length} noun="grades" value={searchValue} onChange={onSearchChange} placeholder="Search grades or courses..." />}<div className="role-grade-list">{items.map((g) => <Grade key={g.name} {...g}/>)}</div>{items.length === 0 && <p className="role-note">No grades found.</p>}</section>;
 }
 function Grade({ name, course, score }) { return <div className="role-grade-row"><div><strong>{name}</strong><span>{course}</span></div><b>{score}</b></div>; }
-function SchedulePanel({ full = false }) {
-  return <section className={`dashboard-panel role-panel ${full ? "role-full-panel" : ""}`}><PanelHeading title="Today's Schedule" subtitle="Your classes for today"/><Schedule time="09:00 – 10:00" title="Data Structures" room="Block A · Room 204"/><Schedule time="11:00 – 12:00" title="Database Management" room="Block C · Lab 02"/><Schedule time="14:00 – 15:00" title="Discrete Mathematics" room="Block B · Room 105"/></section>;
+function SchedulePanel({ full = false, items = scheduleItems, searchValue, onSearchChange }) {
+  return <section className={`dashboard-panel role-panel ${full ? "role-full-panel" : ""}`}><PanelHeading title="Today's Schedule" subtitle="Your classes for today"/>{onSearchChange && <SearchRow count={items.length} noun="classes" value={searchValue} onChange={onSearchChange} placeholder="Search classes or rooms..." />}{items.map((s) => <Schedule key={s.title} {...s}/>)}{items.length === 0 && <p className="role-note">No classes found.</p>}</section>;
 }
 function Schedule({ time, title, room }) { return <div className="role-schedule-row"><span>{time}</span><div><strong>{title}</strong><small>{room}</small></div></div>; }
 function Announcement({ title, detail }) { return <div className="role-announcement"><Bell size={19}/><div><strong>{title}</strong><p>{detail}</p></div><ArrowUpRight size={16}/></div>; }

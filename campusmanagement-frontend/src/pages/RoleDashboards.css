@@ -30,7 +30,7 @@
 .role-schedule-row small { color: #A69A90; font-size: 11px; }
 .role-due { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .role-search-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: -7px 0 14px; color: #95877D; font-size: 12px; }
-.role-search-row input { width: min(280px, 55%); padding: 9px 12px; border: 1px solid #E8D7C7; border-radius: 8px; outline: none; color: #40362E; background: #FFFCF9; font: inherit; font-size: 12px; }
+.role-search-row input { width: min(280px, 55%); padding: 9px 12px 9px 34px; border: 1px solid #E8D7C7; border-radius: 8px; outline: none; color: #40362E; background: #FFFCF9; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2395877D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 11px center; background-size: 16px 16px; font: inherit; font-size: 12px; }
 .role-search-row input:focus, .role-create-modal input:focus { border-color: #C8753D; box-shadow: 0 0 0 3px #C8753D1c; }
 .role-table { min-width: 650px; }
 .role-table th { white-space: nowrap; }
