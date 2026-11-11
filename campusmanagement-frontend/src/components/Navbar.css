@@ -27,26 +27,6 @@
   gap: 23px;
 }
 
-.navbar-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #F7F1E9;
-  color: #95877D;
-  padding: 11px 14px;
-  border-radius: 10px;
-  width: 220px;
-}
-
-.navbar-search input {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: #292522;
-}
-
 .notification-button {
   position: relative;
   border: none;
@@ -100,10 +80,6 @@
     padding: 15px;
   }
 
-  .navbar-search {
-    width: 150px;
-  }
-
   .navbar-actions {
     gap: 10px;
   }
@@ -118,9 +94,5 @@
   .navbar-actions {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .navbar-search {
-    flex: 1;
   }
 }

@@ -1,5 +1,5 @@
 
-import { Search, Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 
 import "./Navbar.css";
 
@@ -21,14 +21,6 @@ function Navbar({ pageTitle }) {
       </div>
 
       <div className="navbar-actions">
-
-        <div className="navbar-search">
-          <Search size={19} />
-          <input
-            type="text"
-            placeholder="Search..."
-          />
-        </div>
 
         <button
           className="notification-button"
