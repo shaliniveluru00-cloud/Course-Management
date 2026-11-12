@@ -1,7 +1,7 @@
 
 .top-navbar {
   min-height: 85px;
-  padding: 15px 32px;
+  padding: 18px 39px;
   background: #FFFFFF;
   border-bottom: 1px solid #E8D7C7;
   display: flex;
@@ -18,7 +18,7 @@
 .navbar-title p {
   color: #95877D;
   font-size: 13px;
-  margin-top: 5px;
+  margin-top: 6.5px;
 }
 
 .navbar-actions {
@@ -60,7 +60,7 @@
   place-items: center;
   border-radius: 50%;
   background: #F5D8C1;
-  color: #A85D2D;
+  color:  rgba(255, 106, 0, 0.989),;
   font-weight: 700;
 }
 
