@@ -1,4 +1,12 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate
+} from "react-router-dom";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
@@ -7,42 +15,91 @@ import Login from "./pages/Login";
 function LoginRoute() {
   const navigate = useNavigate();
 
- function handleLogin(data) {
-  localStorage.setItem("token", data.access);
-  localStorage.setItem("user", JSON.stringify(data.user));
+  function handleLogin(data) {
+    console.log("Login response:", {
+      hasAccess: Boolean(data?.access),
+      hasRefresh: Boolean(data?.refresh),
+      role: data?.user?.role
+    });
 
-  const role = data.user.role;   // "STUDENT", "FACULTY" or "ADMIN"
-  const route = role === "STUDENT" ? "/student" : role === "FACULTY" ? "/faculty" : "/admin";
-  navigate(route);
-}
+    if (!data?.access || !data?.user) {
+      console.error("Login response is missing access token or user.");
+      return;
+    }
+
+    localStorage.setItem("token", data.access);
+    localStorage.setItem("refresh", data.refresh);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    navigate("/login"); // Navigate to login first to reset state
+
+    const role = data.user.role;
+
+    if (role === "STUDENT") {
+      navigate("/student");
+    } else if (role === "FACULTY") {
+      navigate("/faculty");
+    } else if (role === "ADMIN") {
+      navigate("/admin");
+    } else {
+      console.error("Unknown user role:", role);
+    }
+  }
+
   return <Login onLogin={handleLogin} />;
 }
 
-// STEP 8: only lets the right role into a page
 function Protected({ role, children }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // Not logged in, or logged in with a different role -> back to the login page
-  if (!user || user.role !== role) return <Navigate to="/login" replace />;
+  if (!user || user.role !== role) {
+    return <Navigate to="/login" replace />;
+  }
 
   return children;
 }
 
 function AppRoutes() {
   const navigate = useNavigate();
-  const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  navigate("/login");
-};
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refresh");
+    navigate("/login");
+  }
 
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginRoute />} />
-      <Route path="/student" element={<Protected role="STUDENT"><StudentDashboard onLogout={handleLogout} /></Protected>} />
-      <Route path="/faculty" element={<Protected role="FACULTY"><FacultyDashboard onLogout={handleLogout} /></Protected>} />
-      <Route path="/admin" element={<Protected role="ADMIN"><AdminDashboard onLogout={handleLogout} /></Protected>} />
+
+      <Route
+        path="/student"
+        element={
+          <Protected role="STUDENT">
+            <StudentDashboard onLogout={handleLogout} />
+          </Protected>
+        }
+      />
+
+      <Route
+        path="/faculty"
+        element={
+          <Protected role="FACULTY">
+            <FacultyDashboard onLogout={handleLogout} />
+          </Protected>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <Protected role="ADMIN">
+            <AdminDashboard onLogout={handleLogout} />
+          </Protected>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

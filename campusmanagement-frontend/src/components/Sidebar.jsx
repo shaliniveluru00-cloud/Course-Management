@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import "./Sidebar.css";
 
-function Sidebar({ activeItem, onNavigate, role = "Admin" }) {
+function Sidebar({ activeItem, onNavigate, role   }) {
   const adminItems = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Students", icon: Users },

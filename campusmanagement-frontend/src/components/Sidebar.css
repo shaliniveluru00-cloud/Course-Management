@@ -14,8 +14,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #C8753D;
-  padding: 5px 10px 30px;
+  color: rgba(250, 105, 0, 0.92);
+  padding: 2px 10px 18px;
   border-bottom: 1px solid #F0E5DC;
 }
 
@@ -64,11 +64,11 @@
 
 .sidebar-link:hover {
   background: #FFF3E9;
-  color: #C8753D;
+  color: #d97f43;
 }
 
 .sidebar-link.selected {
-  background: #C8753D;
+  background:rgba(220, 105, 0, 0.92);
   color: #FFFFFF;
   box-shadow: 0 4px 10px rgba(200, 117, 61, 0.18);
 }
@@ -79,7 +79,7 @@
 }
 
 .logout-link:hover {
-  color: #B94B3A;
+  color: #d75743;
   background: #FFF0ED;
 }
 
