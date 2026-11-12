@@ -46,7 +46,7 @@ INSERT INTO courses (id, code, name, credits, capacity, faculty_id) VALUES
     (12, 'EE202', 'Control Systems', 4, 60, 4), -- EE
     (13, 'ME101', 'Engineering Mechanics', 4, 60, 5), -- ME
     (14, 'ME201', 'Thermodynamics', 4, 60, 5), -- ME
-    (15, 'DS101', 'Introduction to Data Science', 3, 100, 8); -- DS; capacity supports all CSE students
+    (15, 'DS101', 'Introduction to Data Science', 3, 150, 8); -- DS; open elective, capacity supports all 150 students
 
 -- Enrollments (IDs match the supplied students table).
 INSERT INTO enrollments (id, student_id, course_id, enroll_date) VALUES

@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
 
 from accounts.models import Faculty, Student
 
@@ -84,3 +85,91 @@ class Grade(models.Model):
 
     def __str__(self):
         return f"{self.submission} = {self.marks}"
+
+
+class PreviousCourse(models.Model):
+    """A course from an earlier year (from the `previous_courses` SQL table).
+    Separate from `Course`: these are finished and can't be enrolled in."""
+
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=150)
+    credits = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT, related_name="previous_courses")
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class PreviousEnrollment(models.Model):
+    """One student's result in one previous course, with attendance
+    (from the `previous_enrollments` SQL table).
+
+    Rules used when the data was made:
+      attendance below 60%  -> grade DX and status Failed
+      otherwise grade F     -> status Failed
+      otherwise             -> status Completed
+    """
+
+    class Grade(models.TextChoices):
+        A = "A", "A"
+        B = "B", "B"
+        C = "C", "C"
+        D = "D", "D"
+        F = "F", "F"
+        DX = "DX", "DX (attendance below 60%)"
+
+    class Result(models.TextChoices):
+        COMPLETED = "Completed", "Completed"
+        FAILED = "Failed", "Failed"
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="previous_enrollments")
+    course = models.ForeignKey(PreviousCourse, on_delete=models.CASCADE, related_name="enrollments")
+    grade = models.CharField(max_length=2, choices=Grade.choices)
+    classes_held = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    classes_attended = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=Result.choices)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["student", "course"], name="unique_student_previous_course")
+        ]
+
+    @property
+    def attendance_percent(self):
+        return round(self.classes_attended * 100 / self.classes_held, 1)
+
+    def __str__(self):
+        return f"{self.student} -> {self.course}: {self.grade}"
+
+
+class EnrollmentRequest(models.Model):
+    """A student's request to join a course outside their own department.
+    The course's faculty approves or rejects it. Approving creates the Enrollment row."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="enrollment_requests")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollment_requests")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        Faculty, null=True, blank=True, on_delete=models.SET_NULL, related_name="decided_requests"
+    )
+
+    class Meta:
+        constraints = [
+            # A student can have many old requests for a course (e.g. one rejected),
+            # but only one waiting for an answer.
+            models.UniqueConstraint(
+                fields=["student", "course"],
+                condition=Q(status="pending"),
+                name="one_pending_request_per_course",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.student} -> {self.course} ({self.status})"
