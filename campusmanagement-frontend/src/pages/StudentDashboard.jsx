@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import {
@@ -18,9 +19,7 @@ import Navbar from "../components/Navbar";
 import "./RoleDashboards.css";
 
 // --------------------------------------------------
-// HARDCODED DATA (UNCHANGED FOR NOW)
-// We will connect these sections after their APIs
-// are available.
+// ASSIGNMENTS
 // --------------------------------------------------
 
 const assignments = [
@@ -43,14 +42,20 @@ const assignments = [
     status: "Pending",
   },
 ];
-<<<<<<< Updated upstream
-=======
+
+// --------------------------------------------------
+// GRADES
+// --------------------------------------------------
 
 const grades = [
   { name: "Data Structures – Quiz 2", course: "CS301", score: "18/20" },
   { name: "DBMS – Lab Assessment", course: "CS305", score: "24/25" },
   { name: "Discrete Math – Test 1", course: "MA202", score: "42/50" },
 ];
+
+// --------------------------------------------------
+// SCHEDULE
+// --------------------------------------------------
 
 const scheduleItems = [
   {
@@ -76,7 +81,6 @@ const matches = (text, query) =>
 // --------------------------------------------------
 // STUDENT DASHBOARD
 // --------------------------------------------------
->>>>>>> Stashed changes
 
 function StudentDashboard({ onLogout }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -84,11 +88,6 @@ function StudentDashboard({ onLogout }) {
 
   const [activeItem, setActiveItem] = useState("Dashboard");
 
-<<<<<<< Updated upstream
-  const filteredAssignments = assignments.filter((item) =>
-    `${item.title} ${item.course}`.toLowerCase().includes(search.toLowerCase())
-  );
-=======
   // Search states
   const [search, setSearch] = useState("");
   const [courseSearch, setCourseSearch] = useState("");
@@ -128,17 +127,17 @@ function StudentDashboard({ onLogout }) {
         }
 
         if (!response.ok) {
-          throw new Error(`Unable to load courses. Server error: ${response.status}`);
+          throw new Error(
+            `Unable to load courses. Server error: ${response.status}`
+          );
         }
 
         const data = await response.json();
 
-        // Supports both normal list responses and paginated responses.
         const courseList = Array.isArray(data)
           ? data
           : data.results || data.courses || [];
 
-        // Convert backend field names into the names used by our UI.
         const formattedCourses = courseList.map((course) => ({
           id: course.id,
           code: course.code,
@@ -151,7 +150,9 @@ function StudentDashboard({ onLogout }) {
         setCoursesError("");
       } catch (error) {
         console.error("Courses API error:", error);
-        setCoursesError(error.message || "Something went wrong while loading courses.");
+        setCoursesError(
+          error.message || "Something went wrong while loading courses."
+        );
       } finally {
         setCoursesLoading(false);
       }
@@ -185,7 +186,10 @@ function StudentDashboard({ onLogout }) {
       scheduleSearch
     )
   );
->>>>>>> Stashed changes
+
+  // --------------------------------------------------
+  // NAVIGATION
+  // --------------------------------------------------
 
   function handleNavigate(item) {
     if (item === "Logout") {
@@ -207,15 +211,6 @@ function StudentDashboard({ onLogout }) {
         onNavigate={handleNavigate}
       />
 
-<<<<<<< Updated upstream
-          {activeItem === "My Courses" && <section className="dashboard-panel role-panel"><PanelHeading title="My Courses" subtitle="All courses you are enrolled in"/><CourseGrid /></section>}
-          {activeItem === "Assignments" && <section className="dashboard-panel role-panel"><PanelHeading title="Assignments" subtitle="Search and track your coursework"/><div className="role-search-row"><span>{filteredAssignments.length} assignments</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search assignments..." aria-label="Search assignments" /></div><AssignmentTable items={filteredAssignments} /></section>}
-          {activeItem === "Grades" && <GradesPanel />}
-          {activeItem === "Attendance" && <section className="dashboard-panel role-panel"><PanelHeading title="Attendance Overview" subtitle="Your attendance this semester"/><div className="role-attendance"><strong>92%</strong><span>Overall attendance</span><CheckCircle2 size={28}/></div><p className="role-note">You are meeting the minimum attendance requirement of 75%.</p></section>}
-          {activeItem === "Schedule" && <SchedulePanel full />}
-          {activeItem === "Announcements" && <section className="dashboard-panel role-panel"><PanelHeading title="Announcements" subtitle="Latest updates from your campus"/><Announcement title="Mid-semester examination timetable published" detail="Check the examination section for updated dates and room details."/><Announcement title="Project review submissions" detail="Submit your project synopsis before the department deadline."/></section>}
-          {activeItem === "Settings" && <section className="dashboard-panel role-panel"><PanelHeading title="Settings" subtitle="Student account preferences"/><p className="role-note">Your profile and notification preferences will be available here.</p></section>}
-=======
       <main className="admin-main">
         <Navbar
           pageTitle={activeItem}
@@ -224,6 +219,9 @@ function StudentDashboard({ onLogout }) {
         />
 
         <div className="dashboard-content">
+
+          {/* DASHBOARD HOME */}
+
           {activeItem === "Dashboard" && (
             <>
               <section className="welcome-banner">
@@ -290,6 +288,8 @@ function StudentDashboard({ onLogout }) {
             </>
           )}
 
+          {/* MY COURSES */}
+
           {activeItem === "My Courses" && (
             <section className="dashboard-panel role-panel">
               <PanelHeading
@@ -315,6 +315,8 @@ function StudentDashboard({ onLogout }) {
             </section>
           )}
 
+          {/* ASSIGNMENTS */}
+
           {activeItem === "Assignments" && (
             <section className="dashboard-panel role-panel">
               <PanelHeading
@@ -324,6 +326,7 @@ function StudentDashboard({ onLogout }) {
 
               <div className="role-search-row">
                 <span>{filteredAssignments.length} assignments</span>
+
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -336,6 +339,8 @@ function StudentDashboard({ onLogout }) {
             </section>
           )}
 
+          {/* GRADES */}
+
           {activeItem === "Grades" && (
             <GradesPanel
               items={filteredGrades}
@@ -343,6 +348,8 @@ function StudentDashboard({ onLogout }) {
               onSearchChange={setGradeSearch}
             />
           )}
+
+          {/* ATTENDANCE */}
 
           {activeItem === "Attendance" && (
             <section className="dashboard-panel role-panel">
@@ -363,6 +370,8 @@ function StudentDashboard({ onLogout }) {
             </section>
           )}
 
+          {/* SCHEDULE */}
+
           {activeItem === "Schedule" && (
             <SchedulePanel
               full
@@ -371,6 +380,8 @@ function StudentDashboard({ onLogout }) {
               onSearchChange={setScheduleSearch}
             />
           )}
+
+          {/* ANNOUNCEMENTS */}
 
           {activeItem === "Announcements" && (
             <section className="dashboard-panel role-panel">
@@ -391,6 +402,8 @@ function StudentDashboard({ onLogout }) {
             </section>
           )}
 
+          {/* SETTINGS */}
+
           {activeItem === "Settings" && (
             <section className="dashboard-panel role-panel">
               <PanelHeading
@@ -403,40 +416,16 @@ function StudentDashboard({ onLogout }) {
               </p>
             </section>
           )}
->>>>>>> Stashed changes
+
         </div>
       </main>
     </div>
   );
 }
 
-<<<<<<< Updated upstream
-function Stat({ icon: Icon, value, label }) {
-  return <article className="stat-card"><div className="stat-top"><div className="stat-icon"><Icon size={23}/></div><span className="stat-change">This term</span></div><h2>{value}</h2><p>{label}</p></article>;
-}
-function PanelHeading({ title, subtitle, action, onAction }) {
-  return <div className="panel-heading"><div><h3>{title}</h3><p>{subtitle}</p></div>{action && <button className="view-button" onClick={onAction}>{action}</button>}</div>;
-}
-function CourseGrid() {
-  return <div className="role-course-grid">{courses.map((course, index) => <article className="role-course-card" key={course.code}><div className={`role-course-icon tone-${index}`}><BookOpen size={21}/></div><span className="role-course-code">{course.code}</span><h3>{course.name}</h3><p>{course.faculty}</p><div className="role-progress-label"><span>Course progress</span><strong>{course.progress}%</strong></div><div className="role-progress"><span style={{width: `${course.progress}%`}}/></div></article>)}</div>;
-}
-function AssignmentTable({ items }) {
-  return <div className="activity-table-wrapper"><table className="activity-table role-table"><thead><tr><th>Assignment</th><th>Course</th><th>Due Date</th><th>Status</th></tr></thead><tbody>{items.map((item) => <tr key={item.title}><td>{item.title}</td><td>{item.course}</td><td><span className="role-due"><Clock3 size={14}/>{item.due}</span></td><td><span className={`activity-status ${item.status === "Submitted" ? "completed" : "pending"}`}>{item.status}</span></td></tr>)}</tbody></table></div>;
-}
-function GradesPanel({ onView }) {
-  return <section className="dashboard-panel role-panel"><PanelHeading title="Recent Grades" subtitle="Your latest academic performance" action={onView ? "View report" : undefined} onAction={onView}/><div className="role-grade-list"><Grade name="Data Structures – Quiz 2" course="CS301" score="18/20"/><Grade name="DBMS – Lab Assessment" course="CS305" score="24/25"/><Grade name="Discrete Math – Test 1" course="MA202" score="42/50"/></div></section>;
-}
-function Grade({ name, course, score }) { return <div className="role-grade-row"><div><strong>{name}</strong><span>{course}</span></div><b>{score}</b></div>; }
-function SchedulePanel({ full = false }) {
-  return <section className={`dashboard-panel role-panel ${full ? "role-full-panel" : ""}`}><PanelHeading title="Today's Schedule" subtitle="Your classes for today"/><Schedule time="09:00 – 10:00" title="Data Structures" room="Block A · Room 204"/><Schedule time="11:00 – 12:00" title="Database Management" room="Block C · Lab 02"/><Schedule time="14:00 – 15:00" title="Discrete Mathematics" room="Block B · Room 105"/></section>;
-}
-function Schedule({ time, title, room }) { return <div className="role-schedule-row"><span>{time}</span><div><strong>{title}</strong><small>{room}</small></div></div>; }
-function Announcement({ title, detail }) { return <div className="role-announcement"><Bell size={19}/><div><strong>{title}</strong><p>{detail}</p></div><ArrowUpRight size={16}/></div>; }
-=======
 // --------------------------------------------------
 // REUSABLE COMPONENTS
 // --------------------------------------------------
->>>>>>> Stashed changes
 
 function Stat({ icon: Icon, value, label }) {
   return (
@@ -489,7 +478,7 @@ function SearchRow({ count, noun, value, onChange, placeholder }) {
 }
 
 // --------------------------------------------------
-// COURSE GRID - NOW USES BACKEND DATA
+// COURSE GRID - BACKEND DATA
 // --------------------------------------------------
 
 function CourseGrid({ items = [] }) {
@@ -523,6 +512,10 @@ function CourseGrid({ items = [] }) {
     </div>
   );
 }
+
+// --------------------------------------------------
+// ASSIGNMENT TABLE
+// --------------------------------------------------
 
 function AssignmentTable({ items }) {
   return (
@@ -564,6 +557,10 @@ function AssignmentTable({ items }) {
     </div>
   );
 }
+
+// --------------------------------------------------
+// GRADES
+// --------------------------------------------------
 
 function GradesPanel({
   onView,
@@ -616,6 +613,10 @@ function Grade({ name, course, score }) {
   );
 }
 
+// --------------------------------------------------
+// SCHEDULE
+// --------------------------------------------------
+
 function SchedulePanel({
   full = false,
   items = scheduleItems,
@@ -666,6 +667,10 @@ function Schedule({ time, title, room }) {
     </div>
   );
 }
+
+// --------------------------------------------------
+// ANNOUNCEMENTS
+// --------------------------------------------------
 
 function Announcement({ title, detail }) {
   return (
