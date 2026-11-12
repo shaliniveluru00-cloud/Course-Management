@@ -6,7 +6,6 @@
 .role-course-card, .role-class-card { min-width: 0; padding: 18px; border: 1px solid #F0E5DC; border-radius: 12px; background: #FFFCF9; }
 .role-course-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; margin-bottom: 12px; background: #FFF0E4; color:rgba(220, 105, 0, 0.92); }
 .role-course-icon.tone-1 { background: #FCEBE4; color:rgba(220, 105, 0, 0.92); }
-.role-course-icon.tone-2 { background: #EAF3E9; color: #54845C; }
 .role-course-code { color:rgba(220, 105, 0, 0.92); font-size: 11px; font-weight: 700; letter-spacing: .5px; }
 .role-course-card h3, .role-class-card h3 { margin: 7px 0 6px; color: #302923; font-size: 14px; line-height: 1.45; }
 .role-course-card p { color: #95877D; font-size: 12px; }
@@ -63,6 +62,273 @@
 .role-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .role-primary-button { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 8px; padding: 10px 15px; background: #C8753D; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
 .role-primary-button:hover { background: #A85D2D; }
+
+/* ==========================================
+   STUDENT COURSE TABS
+========================================== */
+
+.course-tabs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eee5de;
+  margin: 25px 0 22px;
+  overflow-x: auto;
+}
+
+.course-tab {
+  border: none;
+  background: transparent;
+  color: #777;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: 0.2s ease;
+}
+
+.course-tab:hover {
+  color: #e87520;
+}
+
+.course-tab.active {
+  color: #e87520;
+  border-bottom-color: #e87520;
+}
+
+/* Search */
+
+.course-search-row {
+  margin-bottom: 22px;
+}
+
+.course-search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #fffaf6;
+  border: 1px solid #eadfd5;
+  border-radius: 9px;
+  padding: 0 12px;
+  min-width: 220px;
+}
+
+.course-search-box svg {
+  color: #999;
+  flex-shrink: 0;
+}
+
+.course-search-box input {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 11px 0;
+  width: 100%;
+}
+
+/* Course details */
+
+.course-extra-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.course-extra-details span {
+  color: #888;
+}
+
+.course-extra-details strong {
+  color: #333;
+  text-align: right;
+}
+
+.course-enroll-button {
+  width: 100%;
+  padding: 11px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 8px;
+  background: #ed791f;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.course-enroll-button:hover:not(:disabled) {
+  background: #d96512;
+}
+
+.course-enroll-button:disabled {
+  background: #e8e1dc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Status badges */
+
+.course-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.course-status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.course-status-badge.completed {
+  background: #e4f5e9;
+  color: #218344;
+}
+
+.course-status-badge.failed {
+  background: #fde8e7;
+  color: #c0392b;
+}
+
+.course-dx-note {
+  font-size: 11px;
+  color: #b45b22;
+}
+
+/* Messages */
+
+.course-success {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 15px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: #e8f6ec;
+  color: #267c42;
+  font-size: 14px;
+}
+
+.course-error {
+  padding: 13px 15px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: #fff0ee;
+  color: #bd3930;
+  font-size: 14px;
+}
+
+.course-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid #e5a49e;
+  border-radius: 7px;
+  background: white;
+  color: #bd3930;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .course-tabs {
+    gap: 2px;
+  }
+
+  .course-tab {
+    padding: 12px 10px;
+    font-size: 12px;
+  }
+
+  .course-search-box {
+    min-width: 150px;
+  }
+}
+
+/* ==========================================
+   STUDENT COURSE SEARCH - FINAL OVERRIDE
+========================================== */
+
+.course-search-row {
+  margin-bottom: 22px;
+}
+
+.course-search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #fffaf6;
+  border: 1px solid #eadfd5;
+  border-radius: 9px;
+  padding: 0 12px;
+  min-width: 220px;
+  transition: border-color 0.2s ease;
+}
+
+.course-search-box svg {
+  color: #999;
+  flex-shrink: 0;
+}
+
+/* Search input */
+
+.course-search-box input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  background-image: none;
+  font: inherit;
+  font-size: 13px;
+  color: #40362E;
+}
+
+/* Remove the inherited focus shadow */
+
+.course-search-box input:focus,
+.course-search-box input:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* Only the outer search box changes on focus */
+
+.course-search-box:focus-within {
+  border-color: #C8753D;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Placeholder */
+
+.course-search-box input::placeholder {
+  color: #A69A90;
+  opacity: 1;
+}
+
+@media (max-width: 650px) {
+  .course-search-box {
+    min-width: 150px;
+  }
+}
+
+
 @media (max-width: 1100px) { .role-course-grid, .role-class-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 800px) { .role-two-column { grid-template-columns: 1fr; gap: 0; } }
 @media (max-width: 600px) { .role-course-grid, .role-class-grid, .role-report-grid { grid-template-columns: 1fr; } .role-search-row { align-items: stretch; flex-direction: column; } .role-search-row input { width: auto; } .role-schedule-row > span { min-width: 90px; } }
