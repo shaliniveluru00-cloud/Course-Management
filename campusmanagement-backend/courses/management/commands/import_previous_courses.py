@@ -2,7 +2,8 @@
 Loads previously enrolled courses (with grades and attendance) from
 database/06_previous_courses.sql.
 Run AFTER import_users and import_profiles:   python manage.py import_previous_courses
-Safe to run more than once (rows are updated, not duplicated).
+Safe to run more than once: the earlier previous-course rows are cleared first and the file is loaded
+again, so the result is always exactly what is in the SQL file (nothing old is left over, nothing doubled).
 
 The SQL file's rules are checked while importing; a row that breaks one is skipped and reported:
   attendance below 60%  -> grade DX and status Failed
@@ -36,6 +37,9 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         text = Path(options["file"]).read_text()
+        # Start clean: an older version of the file may have had different courses and pairings
+        PreviousEnrollment.objects.all().delete()
+        PreviousCourse.objects.all().delete()
         faculty = Faculty.objects.in_bulk()
         students = Student.objects.in_bulk()
         skipped = 0

@@ -1,7 +1,9 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Assignment, Course, CourseSchedule, Enrollment, EnrollmentRequest, PreviousEnrollment
+from accounts.models import Student
+
+from .models import Assignment, Course, Grade, PreviousCourse, CourseSchedule, Enrollment, EnrollmentRequest, PreviousEnrollment
 from .rules import needs_approval
 
 
@@ -92,13 +94,22 @@ class EnrollmentRequestSerializer(serializers.ModelSerializer):
     student_department = serializers.CharField(source="student.department", read_only=True)
     course_code = serializers.CharField(source="course.code", read_only=True)
     course_name = serializers.CharField(source="course.name", read_only=True)
+    seats_left = serializers.SerializerMethodField()
 
     class Meta:
         model = EnrollmentRequest
         fields = [
             "id", "student_name", "roll_no", "student_department",
-            "course_code", "course_name", "status", "requested_at", "decided_at",
+            "course_code", "course_name", "seats_left", "status", "requested_at", "decided_at",
         ]
+
+    def get_seats_left(self, enrollment_request):
+        # The list view attaches `taken` (enrolled count); otherwise count it here
+        course = enrollment_request.course
+        taken = getattr(enrollment_request, "taken", None)
+        if taken is None:
+            taken = course.enrollments.count()
+        return max(course.capacity - taken, 0)
 
 
 class StudentAssignmentSerializer(serializers.ModelSerializer):
@@ -114,7 +125,7 @@ class StudentAssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment
         fields = [
-            "id", "title", "course_code", "course_name", "due_date",
+            "id", "title", "description", "course_code", "course_name", "due_date",
             "max_marks", "submitted_date", "status", "grade",
         ]
 
@@ -163,3 +174,100 @@ class StudentScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseSchedule
         fields = ["course_code", "course_name", "faculty_name", "start_time", "end_time", "room"]
+
+
+class StudentMarkSerializer(serializers.ModelSerializer):
+    """One graded assignment on the Grades page (Marks section)."""
+
+    assignment = serializers.CharField(source="submission.assignment.title", read_only=True)
+    course_code = serializers.CharField(source="submission.assignment.course.code", read_only=True)
+    course_name = serializers.CharField(source="submission.assignment.course.name", read_only=True)
+    out_of = serializers.IntegerField(source="submission.assignment.max_marks", read_only=True)
+
+    class Meta:
+        model = Grade
+        fields = ["assignment", "course_code", "course_name", "marks", "out_of", "letter_grade", "remarks"]
+
+
+class FacultyCourseSerializer(serializers.ModelSerializer):
+    """One course on the faculty's My Courses page. The view attaches
+    enrolled_count, seats_left and pending_requests."""
+
+    enrolled_count = serializers.IntegerField(read_only=True)
+    seats_left = serializers.IntegerField(read_only=True)
+    pending_requests = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = [
+            "code", "name", "credits", "capacity",
+            "enrolled_count", "seats_left", "pending_requests",
+        ]
+
+
+class EnrolledStudentSerializer(serializers.ModelSerializer):
+    """One enrolled student on the faculty's Students page."""
+
+    class Meta:
+        model = Student
+        fields = ["roll_no", "name", "email", "department", "year"]
+
+
+class FacultyScheduleSerializer(serializers.ModelSerializer):
+    """One course on the faculty member's Schedule page: when and where it is taught.
+    Built from Course, so a course with no timetable yet still appears (time and room empty).
+    The view attaches enrolled_count."""
+
+    course_code = serializers.CharField(source="code", read_only=True)
+    course_name = serializers.CharField(source="name", read_only=True)
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+    enrolled_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = ["course_code", "course_name", "start_time", "end_time", "room", "enrolled_count"]
+
+    def _slot(self, course):
+        return getattr(course, "schedule", None)
+
+    def get_start_time(self, course):
+        slot = self._slot(course)
+        return slot.start_time.strftime("%H:%M") if slot else None
+
+    def get_end_time(self, course):
+        slot = self._slot(course)
+        return slot.end_time.strftime("%H:%M") if slot else None
+
+    def get_room(self, course):
+        slot = self._slot(course)
+        return slot.room if slot else None
+
+
+
+class FacultyPreviousCourseSerializer(serializers.ModelSerializer):
+    """One earlier course the faculty member taught (Grades page, first level).
+    The view attaches student_count."""
+
+    student_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = PreviousCourse
+        fields = ["code", "name", "credits", "student_count"]
+
+
+class FacultyPreviousStudentSerializer(serializers.ModelSerializer):
+    """One student's result in an earlier course (Grades page, second level)."""
+
+    roll_no = serializers.CharField(source="student.roll_no", read_only=True)
+    name = serializers.CharField(source="student.name", read_only=True)
+    department = serializers.CharField(source="student.department", read_only=True)
+    attendance = serializers.FloatField(source="attendance_percent", read_only=True)
+
+    class Meta:
+        model = PreviousEnrollment
+        fields = [
+            "roll_no", "name", "department", "grade",
+            "classes_held", "classes_attended", "attendance", "status",
+        ]

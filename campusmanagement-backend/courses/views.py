@@ -1,7 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, F, OuterRef, Subquery
 from django.shortcuts import get_object_or_404
-from django.db.models.functions import Greatest
+from django.db.models.functions import Coalesce, Greatest
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.filters import SearchFilter
@@ -13,16 +13,22 @@ from rest_framework.views import APIView
 from accounts.models import Faculty, Student
 from accounts.permissions import IsFaculty, IsStudent
 
-from .models import Assignment, Course, CourseSchedule, Enrollment, EnrollmentRequest, Grade, PreviousEnrollment, Submission
+from .models import Assignment, Course, CourseSchedule, PreviousCourse, Enrollment, EnrollmentRequest, Grade, PreviousEnrollment, Submission
 from .rules import needs_approval
 from .serializers import (
     AvailableCourseSerializer,
     CourseSerializer,
+    EnrolledStudentSerializer,
     EnrollmentRequestSerializer,
+    FacultyCourseSerializer,
+    FacultyPreviousCourseSerializer,
+    FacultyPreviousStudentSerializer,
+    FacultyScheduleSerializer,
     EnrollSerializer,
     PreviousEnrollmentSerializer,
     StudentAssignmentSerializer,
     StudentGradeSerializer,
+    StudentMarkSerializer,
     StudentScheduleSerializer,
 )
 
@@ -168,6 +174,32 @@ class StudentGradeList(ListAPIView):
         )
 
 
+class StudentMarkList(ListAPIView):
+    """
+    GET /api/student/marks/              (Grades page: the Marks section)
+    GET /api/student/marks/?search=quiz  search by assignment title, course code or name
+    The student's graded assignments with marks out of the maximum.
+    The Grades section of that page is /api/student/grades/ (course letter grades).
+    """
+
+    serializer_class = StudentMarkSerializer
+    permission_classes = [IsAuthenticated, IsStudent]
+    filter_backends = [SearchFilter]
+    search_fields = [
+        "submission__assignment__title",
+        "submission__assignment__course__code",
+        "submission__assignment__course__name",
+    ]
+
+    def get_queryset(self):
+        return (
+            Grade.objects
+            .filter(submission__student_id=self.request.user.pk)
+            .select_related("submission__assignment__course")
+            .order_by("submission__assignment__course__code", "submission__assignment__due_date", "id")
+        )
+
+
 # ---------------------------------------------------------------- student: assignments
 
 
@@ -279,26 +311,158 @@ class StudentEnroll(APIView):
 # ---------------------------------------------------------------- faculty: the requests
 
 
+class FacultyCourseList(ListAPIView):
+    """
+    GET /api/faculty/courses/             (My Courses page)
+    GET /api/faculty/courses/?search=os   search by course name or code
+    The courses the logged-in faculty member teaches, with how many students are
+    enrolled, how many seats are left and how many requests are waiting.
+    Faculty can only look at courses here; editing courses is for the admin.
+    """
+
+    serializer_class = FacultyCourseSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["code", "name"]
+
+    def get_queryset(self):
+        waiting = (
+            EnrollmentRequest.objects
+            .filter(course=OuterRef("pk"), status=EnrollmentRequest.Status.PENDING)
+            .order_by().values("course").annotate(n=Count("pk")).values("n")
+        )
+        return (
+            Course.objects
+            .filter(faculty_id=self.request.user.pk)
+            .annotate(
+                enrolled_count=Count("enrollments"),
+                pending_requests=Coalesce(Subquery(waiting), 0),
+            )
+            .annotate(seats_left=Greatest(F("capacity") - F("enrolled_count"), 0))
+            .order_by("code")
+        )
+
+
+class FacultyPreviousCourseList(ListAPIView):
+    """
+    GET /api/faculty/grades/              (Grades page: the courses this faculty member graded)
+    GET /api/faculty/grades/?search=math  search by course name or code
+    The earlier courses taught by the logged-in faculty member, with how many students took each.
+    """
+
+    serializer_class = FacultyPreviousCourseSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["code", "name"]
+
+    def get_queryset(self):
+        return (
+            PreviousCourse.objects
+            .filter(faculty_id=self.request.user.pk)
+            .annotate(student_count=Count("enrollments"))
+            .order_by("code")
+        )
+
+
+class FacultyPreviousStudentList(ListAPIView):
+    """
+    GET /api/faculty/grades/<code>/students/              (click a course)
+    GET /api/faculty/grades/<code>/students/?search=ravi  by student name, roll number or grade
+    Every student who took one of this faculty member's earlier courses, with their grade,
+    attendance and Completed / Failed. Someone else's course looks like it doesn't exist (404).
+    """
+
+    serializer_class = FacultyPreviousStudentSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["student__name", "student__roll_no", "grade", "status"]
+
+    def get_queryset(self):
+        course = get_object_or_404(
+            PreviousCourse, code=self.kwargs["code"].strip().upper(), faculty_id=self.request.user.pk
+        )
+        return (
+            PreviousEnrollment.objects
+            .filter(course=course)
+            .select_related("student")
+            .order_by("student__roll_no")
+        )
+
+
+class FacultyScheduleList(ListAPIView):
+    """
+    GET /api/faculty/schedule/                 (Schedule page)
+    GET /api/faculty/schedule/?search=lab      search by course code, name, room or time
+    Every course this faculty member teaches, with its time and room, earliest class first.
+    The same timetable applies every day. A course with no timetable yet is listed last,
+    with empty time and room.
+    Searching "09:00" or "11" matches the start or end time.
+    """
+
+    serializer_class = FacultyScheduleSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["code", "name", "schedule__room", "schedule__start_time", "schedule__end_time"]
+
+    def get_queryset(self):
+        return (
+            Course.objects
+            .filter(faculty_id=self.request.user.pk)
+            .select_related("schedule")
+            .annotate(enrolled_count=Count("enrollments"))
+            .order_by(F("schedule__start_time").asc(nulls_last=True), "code")
+        )
+
+
+class FacultyCourseStudentList(ListAPIView):
+    """
+    GET /api/faculty/courses/<code>/students/             (Students page)
+    GET /api/faculty/courses/<code>/students/?search=ravi  by name, roll number, email, department
+    The students enrolled in one of the logged-in faculty member's courses.
+    A course taught by someone else looks like it doesn't exist (404).
+    """
+
+    serializer_class = EnrolledStudentSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["name", "roll_no", "email", "department"]
+
+    def get_queryset(self):
+        course = get_object_or_404(
+            Course, code=self.kwargs["code"].strip().upper(), faculty_id=self.request.user.pk
+        )
+        return Student.objects.filter(enrollments__course=course).order_by("roll_no")
+
+
 class FacultyRequestList(ListAPIView):
     """
-    GET /api/faculty/enrollment-requests/                 pending requests (default)
-    GET /api/faculty/enrollment-requests/?status=all      or approved / rejected / pending
+    GET /api/faculty/enrollment-requests/                       pending requests (default)
+    GET /api/faculty/enrollment-requests/?status=all            or approved / rejected / pending
+    GET /api/faculty/enrollment-requests/?course=CS202          only one course
+    GET /api/faculty/enrollment-requests/?search=ravi           student name / roll number / course
     Only requests for courses taught by the logged-in faculty member.
+    Each request also says how many seats are left in its course.
     """
 
     serializer_class = EnrollmentRequestSerializer
     permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["student__name", "student__roll_no", "course__code", "course__name"]
 
     def get_queryset(self):
         queryset = (
             EnrollmentRequest.objects
             .filter(course__faculty_id=self.request.user.pk)
             .select_related("student", "course")
+            .annotate(taken=Count("course__enrollments"))
         )
         # A missing or blank ?status= means "pending"
         wanted = (self.request.query_params.get("status") or "pending").strip().lower()
         if wanted != "all":
             queryset = queryset.filter(status=wanted)
+        course = (self.request.query_params.get("course") or "").strip().upper()
+        if course:
+            queryset = queryset.filter(course__code=course)
         return queryset.order_by("requested_at", "id")
 
 
