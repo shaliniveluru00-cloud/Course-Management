@@ -21,7 +21,6 @@ import "./RoleDashboards.css";
 // --------------------------------------------------
 // ASSIGNMENTS
 // --------------------------------------------------
-
 const assignments = [
   {
     title: "Binary Search Tree Implementation",
