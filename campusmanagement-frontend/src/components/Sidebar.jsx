@@ -9,7 +9,7 @@ import {
   BarChart3,
   CalendarDays,
   Bell,
-  Settings,
+  LifeBuoy,
   LogOut,
   Landmark
 } from "lucide-react";
@@ -31,7 +31,6 @@ function Sidebar({ activeItem, onNavigate, role   }) {
     { name: "My Courses", icon: BookOpen },
     { name: "Assignments", icon: FileText },
     { name: "Grades", icon: Award },
-    { name: "Attendance", icon: ClipboardList },
     { name: "Schedule", icon: CalendarDays },
     { name: "Announcements", icon: Bell }
   ];
@@ -75,9 +74,9 @@ function Sidebar({ activeItem, onNavigate, role   }) {
       </div>
 
       <div className="sidebar-bottom">
-        <button className="sidebar-link" onClick={() => onNavigate("Settings")}>
-          <Settings size={20} />
-          <span>Settings</span>
+        <button className="sidebar-link" onClick={() => onNavigate("Help & Contact")}>
+          <LifeBuoy size={20} />
+          <span>Help & Contact</span>
         </button>
         <button className="sidebar-link logout-link" onClick={() => onNavigate("Logout")}>
           <LogOut size={20} />

@@ -13,7 +13,7 @@ import {
   Award,
   BarChart3,
   Search,
-  Settings,
+  LifeBuoy,
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
@@ -657,10 +657,10 @@ function AdminDashboard({ onLogout }) {
     );
   }
 
-  // SETTINGS PAGE
+  // HELP & CONTACT PAGE
 
-  function renderSettings() {
-    return <AdminSettings />;
+  function renderHelpAndContact() {
+    return <AdminHelpAndContact />;
   }
 
   // MAIN RENDER
@@ -683,7 +683,7 @@ function AdminDashboard({ onLogout }) {
 
           {activeItem === "Reports" && renderReports()}
 
-          {activeItem === "Settings" && renderSettings()}
+          {activeItem === "Help & Contact" && renderHelpAndContact()}
         </div>
       </main>
     </div>
@@ -815,51 +815,19 @@ function ManagementSection({
 }
 
 // --------------------------------------------------
-// ADMIN SETTINGS
+// ADMIN HELP & CONTACT
 // --------------------------------------------------
 
-function AdminSettings() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const profile = user.profile ?? {};
-
-  const profileName =
-    profile.name || user.username || "Administrator";
-
+function AdminHelpAndContact() {
   return (
     <section className="dashboard-panel role-panel">
       <div className="panel-heading">
         <div>
-          <h3>Administrator Settings</h3>
-          <p>Administrator account information.</p>
+          <h3>Help & Contact</h3>
+          <p>Get in touch with the campus support teams</p>
         </div>
 
-        <Settings size={27} />
-      </div>
-
-      <div className="management-form">
-        <div className="management-fields">
-          <label>
-            <span>Username</span>
-            <input
-              value={user.username || "Not available"}
-              readOnly
-            />
-          </label>
-
-          <label>
-            <span>Administrator Name</span>
-            <input value={profileName} readOnly />
-          </label>
-
-          <label>
-            <span>Role</span>
-            <input
-              value={user.role || "ADMIN"}
-              readOnly
-            />
-          </label>
-        </div>
+        <LifeBuoy size={27} />
       </div>
     </section>
   );
