@@ -20,6 +20,9 @@ from .serializers import (
     CourseSerializer,
     EnrolledStudentSerializer,
     EnrollmentRequestSerializer,
+    AssignmentCreateSerializer,
+    FacultyAssignmentCourseSerializer,
+    FacultyAssignmentSerializer,
     FacultyCourseSerializer,
     FacultyPreviousCourseSerializer,
     FacultyPreviousStudentSerializer,
@@ -387,6 +390,91 @@ class FacultyPreviousStudentList(ListAPIView):
             .select_related("student")
             .order_by("student__roll_no")
         )
+
+
+# ---------------------------------------------------------------- faculty: assignments
+
+
+class FacultyAssignmentCourseList(ListAPIView):
+    """
+    GET /api/faculty/assignments/             (Assignments page: the course "folders")
+    GET /api/faculty/assignments/?search=os   search by course name or code
+    The current courses the logged-in faculty member teaches, with how many assignments each has.
+    """
+
+    serializer_class = FacultyAssignmentCourseSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["code", "name"]
+
+    def get_queryset(self):
+        return (
+            Course.objects
+            .filter(faculty_id=self.request.user.pk)
+            .annotate(assignment_count=Count("assignments"))
+            .order_by("code")
+        )
+
+
+class FacultyCourseAssignments(ListAPIView):
+    """
+    GET  /api/faculty/courses/<code>/assignments/            every assignment of one of my courses
+    GET  /api/faculty/courses/<code>/assignments/?search=quiz
+    POST /api/faculty/courses/<code>/assignments/            create one:
+         {"title": "...", "description": "...", "due_date": "2026-12-01", "max_marks": 20}
+
+    A new assignment is just a new row in the Assignment table. Every enrolled student sees it
+    straight away on their Assignments page as "pending" and "not graded yet", because the
+    student page works that out from the data (no submission yet, due date still ahead).
+    Someone else's course looks like it doesn't exist (404).
+    """
+
+    serializer_class = FacultyAssignmentSerializer
+    permission_classes = [IsAuthenticated, IsFaculty]
+    filter_backends = [SearchFilter]
+    search_fields = ["title", "description"]
+
+    def get_course(self):
+        return get_object_or_404(
+            Course, code=self.kwargs["code"].strip().upper(), faculty_id=self.request.user.pk
+        )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["student_count"] = self.get_course().enrollments.count()
+        return context
+
+    def get_queryset(self):
+        return (
+            Assignment.objects
+            .filter(course=self.get_course())
+            .annotate(
+                submission_count=Count("submissions", distinct=True),
+                graded_count=Count("submissions__grade", distinct=True),
+            )
+            .order_by("due_date", "id")
+        )
+
+    def post(self, request, code):
+        course = self.get_course()
+        serializer = AssignmentCreateSerializer(data=request.data, context={"course": course})
+        if not serializer.is_valid():
+            # Name the field, so the faculty member knows which box to fix
+            labels = {"title": "Title", "description": "Description",
+                      "due_date": "Due date", "max_marks": "Maximum marks"}
+            field, messages = next(iter(serializer.errors.items()))
+            return Response(
+                {"message": f"{labels.get(field, field)}: {messages[0]}", "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        assignment = serializer.save(course=course)
+        # Show it the way the list does (a new assignment has no submissions yet)
+        assignment.submission_count = 0
+        assignment.graded_count = 0
+        data = FacultyAssignmentSerializer(
+            assignment, context={"student_count": course.enrollments.count()}
+        ).data
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class FacultyScheduleList(ListAPIView):

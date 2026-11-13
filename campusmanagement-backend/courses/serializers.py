@@ -271,3 +271,58 @@ class FacultyPreviousStudentSerializer(serializers.ModelSerializer):
             "roll_no", "name", "department", "grade",
             "classes_held", "classes_attended", "attendance", "status",
         ]
+
+
+class FacultyAssignmentCourseSerializer(serializers.ModelSerializer):
+    """One current course on the faculty Assignments page. The view attaches assignment_count."""
+
+    assignment_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = ["code", "name", "assignment_count"]
+
+
+class FacultyAssignmentSerializer(serializers.ModelSerializer):
+    """One assignment as its faculty member sees it. The view attaches
+    submission_count (handed in) and graded_count; student_count is the size of the course."""
+
+    submission_count = serializers.IntegerField(read_only=True)
+    graded_count = serializers.IntegerField(read_only=True)
+    student_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Assignment
+        fields = [
+            "id", "title", "description", "due_date", "max_marks",
+            "student_count", "submission_count", "graded_count",
+        ]
+
+    def get_student_count(self, assignment):
+        return self.context["student_count"]
+
+
+class AssignmentCreateSerializer(serializers.ModelSerializer):
+    """Checks the body of POST /api/faculty/courses/<code>/assignments/ :
+    {"title": "...", "description": "...", "due_date": "2026-12-01", "max_marks": 20}"""
+
+    # The database allows an empty due date, but then the assignment could never become "missing"
+    due_date = serializers.DateField(required=True)
+
+    class Meta:
+        model = Assignment
+        fields = ["title", "description", "due_date", "max_marks"]
+
+    def validate_title(self, title):
+        title = title.strip()
+        if not title:
+            raise serializers.ValidationError("Give the assignment a title.")
+        course = self.context["course"]
+        if Assignment.objects.filter(course=course, title__iexact=title).exists():
+            raise serializers.ValidationError("This course already has an assignment with that title.")
+        return title
+
+    def validate_due_date(self, due_date):
+        if due_date < timezone.localdate():
+            raise serializers.ValidationError("The due date can't be in the past.")
+        return due_date

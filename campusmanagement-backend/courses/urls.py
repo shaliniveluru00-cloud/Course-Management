@@ -3,6 +3,8 @@ from django.urls import path
 from .views import (
     ApproveEnrollmentRequest,
     AvailableCourseList,
+    FacultyAssignmentCourseList,
+    FacultyCourseAssignments,
     FacultyCourseList,
     FacultyCourseStudentList,
     FacultyPreviousCourseList,
@@ -36,6 +38,9 @@ urlpatterns = [
     # faculty: My Courses page and the students of one course
     path("faculty/courses/", FacultyCourseList.as_view(), name="faculty-courses"),
     path("faculty/courses/<str:code>/students/", FacultyCourseStudentList.as_view(), name="faculty-course-students"),
+    # faculty: assignments page (my courses, then the assignments of one, and creating one)
+    path("faculty/assignments/", FacultyAssignmentCourseList.as_view(), name="faculty-assignment-courses"),
+    path("faculty/courses/<str:code>/assignments/", FacultyCourseAssignments.as_view(), name="faculty-course-assignments"),
     # faculty: grades page (earlier courses, then the students of one)
     path("faculty/grades/", FacultyPreviousCourseList.as_view(), name="faculty-grades"),
     path("faculty/grades/<str:code>/students/", FacultyPreviousStudentList.as_view(), name="faculty-grades-students"),
