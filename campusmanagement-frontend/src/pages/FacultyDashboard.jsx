@@ -66,7 +66,11 @@ function FacultyDashboard({ onLogout }) {
           {activeItem === "Grades" && <section className="dashboard-panel role-panel"><PanelHeading title="Grade Management" subtitle="Review performance and publish results"/><div className="role-grade-list"><Grade name="Data Structures – Quiz 2" course="CS301 · 62 students" score="Pending"/><Grade name="DBMS – Lab Assessment" course="CS305 · 48 students" score="Ready"/><Grade name="Operating Systems – Test 1" course="CS401 · 54 students" score="Draft"/></div></section>}
           {activeItem === "Schedule" && <SchedulePanel full items={filteredSchedule} searchValue={scheduleSearch} onSearchChange={setScheduleSearch}/>}
           {activeItem === "Reports" && <section className="dashboard-panel role-panel"><PanelHeading title="Class Performance" subtitle="A quick overview of your classes"/><div className="role-report-grid"><div><strong>86%</strong><span>Average attendance</span></div><div><strong>78%</strong><span>Average score</span></div><div><strong>94%</strong><span>Submission rate</span></div></div></section>}
-          {activeItem === "Settings" && <section className="dashboard-panel role-panel"><PanelHeading title="Settings" subtitle="Faculty account preferences"/><p className="role-note">Your profile and notification preferences will be available here.</p></section>}
+          {activeItem === "Help & Contact" && (
+            <section className="dashboard-panel role-panel">
+              <PanelHeading title="Help & Contact" subtitle="Get in touch with the campus support teams" />
+            </section>
+          )}
         </div>
       </main>
       {showCreate && <div className="role-modal-backdrop" onClick={() => setShowCreate(false)}><form className="role-create-modal" onSubmit={createAssignment} onClick={(event) => event.stopPropagation()}><h3>Create Assignment</h3><p>Add an assignment title to your course workspace.</p><label>Assignment title<input autoFocus value={assignmentTitle} onChange={(event) => setAssignmentTitle(event.target.value)} placeholder="e.g. Unit 3 – Programming Task" required/></label><div className="role-modal-actions"><button type="button" className="view-button" onClick={() => setShowCreate(false)}>Cancel</button><button type="submit" className="role-primary-button"><Plus size={16}/>Create</button></div></form></div>}

@@ -5,7 +5,6 @@ import {
   BookOpen,
   ClipboardCheck,
   Award,
-  CalendarDays,
   Clock3,
   ArrowUpRight,
   Bell,
@@ -534,8 +533,7 @@ function StudentDashboard({ onLogout }) {
                 </div>
               </section>
 
-              <div className="stats-grid">
-
+                <div className="stats-grid student-stats-grid">
                 <Stat
                   icon={BookOpen}
                   value={
@@ -553,15 +551,9 @@ function StudentDashboard({ onLogout }) {
                 />
 
                 <Stat
-                  icon={Award}
-                  value="8.6"
-                  label="Current CGPA"
-                />
-
-                <Stat
-                  icon={CalendarDays}
-                  value="92%"
-                  label="Attendance"
+                icon={Award}
+                value="8.6"
+                label="Current CGPA"
                 />
 
               </div>
@@ -924,31 +916,6 @@ function StudentDashboard({ onLogout }) {
           )}
 
           {/* ==========================================
-              ATTENDANCE
-          ========================================== */}
-
-          {activeItem === "Attendance" && (
-            <section className="dashboard-panel role-panel">
-
-              <PanelHeading
-                title="Attendance Overview"
-                subtitle="Your attendance this semester"
-              />
-
-              <div className="role-attendance">
-                <strong>92%</strong>
-                <span>Overall attendance</span>
-                <CheckCircle2 size={28} />
-              </div>
-
-              <p className="role-note">
-                You are meeting the minimum attendance requirement of 75%.
-              </p>
-
-            </section>
-          )}
-
-          {/* ==========================================
               SCHEDULE
           ========================================== */}
 
@@ -986,22 +953,20 @@ function StudentDashboard({ onLogout }) {
             </section>
           )}
 
+
+          {/* SETTINGS */}
+
           {/* ==========================================
-              SETTINGS
+            HELP & CONTACT
           ========================================== */}
 
-          {activeItem === "Settings" && (
+          {activeItem === "Help & Contact" && (
             <section className="dashboard-panel role-panel">
 
               <PanelHeading
-                title="Settings"
-                subtitle="Student account preferences"
+                title="Help & Contact"
+                subtitle="Get in touch with the campus support teams"
               />
-
-              <p className="role-note">
-                Your profile and notification preferences will be available here.
-              </p>
-
             </section>
           )}
 

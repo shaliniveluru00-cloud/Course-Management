@@ -309,6 +309,12 @@ input {
   color: #ff7900;
 }
 
+/* Hide browser's built-in password visibility buttons */
+.input-group input[type="password"]::-ms-reveal,
+.input-group input[type="password"]::-ms-clear {
+  display: none;
+}
+
 
 /* =================================
    ROLE SELECTION
