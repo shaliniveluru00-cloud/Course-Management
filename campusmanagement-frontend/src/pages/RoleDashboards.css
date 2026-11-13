@@ -672,3 +672,162 @@ textarea {
 /* Student dashboard: 3 stat cards (Enrolled Courses, Pending Assignments, Current CGPA) */
 .stats-grid.student-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 700px) { .stats-grid.student-stats-grid { grid-template-columns: 1fr; gap: 12px; } }
+
+
+/* ==========================================
+   FACULTY ASSIGNMENTS SECTION
+========================================== */
+
+.assignment-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 25px 0 18px;
+}
+
+.assignment-toolbar h3 {
+  color: #302923;
+  font-size: 16px;
+}
+
+.assignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.assignment-card {
+  padding: 19px;
+  border: 1px solid #F0E5DC;
+  border-radius: 12px;
+  background: #FFFCF9;
+}
+
+.assignment-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.assignment-card-heading h3 {
+  margin: 0 0 8px;
+  color: #302923;
+  font-size: 15px;
+}
+
+.assignment-card-heading p {
+  color: #95877D;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.assignment-marks {
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #FFF0E4;
+  color: #B66A37;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.assignment-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-top: 17px;
+  padding-top: 13px;
+  border-top: 1px solid #F0E5DC;
+}
+
+.assignment-details span {
+  color: #95877D;
+  font-size: 11px;
+}
+
+.assignment-empty {
+  padding: 45px 20px;
+  text-align: center;
+  border: 1px dashed #E8D7C7;
+  border-radius: 12px;
+  color: #B66A37;
+}
+
+.assignment-empty h3 {
+  margin: 12px 0 7px;
+  color: #40362E;
+  font-size: 15px;
+}
+
+.assignment-empty p {
+  color: #95877D;
+  font-size: 12px;
+}
+
+.assignment-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.assignment-modal label {
+  margin-bottom: 16px;
+}
+
+.assignment-modal input,
+.assignment-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #E8D7C7;
+  border-radius: 8px;
+  padding: 11px;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  color: #40362E;
+  background: white;
+}
+
+.assignment-modal textarea {
+  resize: vertical;
+  min-height: 85px;
+}
+
+.assignment-modal input:focus,
+.assignment-modal textarea:focus {
+  border-color: #C8753D;
+  box-shadow: 0 0 0 3px #C8753D1c;
+}
+
+.assignment-cancel-button {
+  padding: 10px 15px;
+  border: 1px solid #E8D7C7;
+  border-radius: 8px;
+  background: white;
+  color: #625A53;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assignment-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .assignment-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .assignment-card-heading {
+    flex-direction: column;
+  }
+
+  .assignment-details {
+    flex-direction: column;
+    gap: 9px;
+  }
+}

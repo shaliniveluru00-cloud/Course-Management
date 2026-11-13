@@ -111,6 +111,30 @@ function FacultyDashboard({ onLogout }) {
   const [courses, setCourses] = useState([]);
   const [requests, setRequests] = useState([]);
   const [schedule, setSchedule] = useState([]);
+
+  // ASSIGNMENT MANAGEMENT
+
+  const [assignmentCourses, setAssignmentCourses] = useState([]);
+  const [selectedAssignmentCourse, setSelectedAssignmentCourse] =
+    useState(null);
+
+  const [courseAssignments, setCourseAssignments] = useState([]);
+
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentError, setAssignmentError] = useState("");
+  const [assignmentSearch, setAssignmentSearch] = useState("");
+
+  const [showAssignmentForm, setShowAssignmentForm] = useState(false);
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
+  const [assignmentMessage, setAssignmentMessage] = useState("");
+
+  const [assignmentForm, setAssignmentForm] = useState({
+    title: "",
+    description: "",
+    due_date: "",
+    max_marks: "1",
+  });
+
   const [previousCourses, setPreviousCourses] = useState([]);
   const [previousStudents, setPreviousStudents] = useState([]);
   const [courseStudents, setCourseStudents] = useState([]);
@@ -158,6 +182,122 @@ function FacultyDashboard({ onLogout }) {
     const data = await apiRequest("/courses/");
     setCourses(getList(data));
   }, []);
+
+  // LOAD COURSES FOR ASSIGNMENT SECTION
+  async function loadAssignmentCourses() {
+    setAssignmentLoading(true);
+    setAssignmentError("");
+
+    try {
+      const data = await apiRequest("/assignments/");
+
+      setAssignmentCourses(getList(data));
+    } catch (err) {
+      if (err.message === "SESSION_EXPIRED") {
+        handleError(err);
+      } else {
+        setAssignmentError(err.message);
+      }
+    } finally {
+      setAssignmentLoading(false);
+    }
+  }
+
+  // OPEN ASSIGNMENTS OF SELECTED COURSE
+  async function openCourseAssignments(course) {
+    setSelectedAssignmentCourse(course);
+    setCourseAssignments([]);
+    setAssignmentError("");
+    setAssignmentMessage("");
+    setAssignmentSearch("");
+
+    setAssignmentLoading(true);
+
+    try {
+      const data = await apiRequest(
+        `/courses/${encodeURIComponent(course.code)}/assignments/`
+      );
+
+      setCourseAssignments(getList(data));
+    } catch (err) {
+      if (err.message === "SESSION_EXPIRED") {
+        handleError(err);
+      } else {
+        setAssignmentError(err.message);
+      }
+    } finally {
+      setAssignmentLoading(false);
+    }
+  }
+
+  // CREATE NEW ASSIGNMENT
+  async function handleCreateAssignment(event) {
+    event.preventDefault();
+
+    if (!selectedAssignmentCourse) return;
+
+    setCreatingAssignment(true);
+    setAssignmentError("");
+    setAssignmentMessage("");
+
+    try {
+      const payload = {
+        title: assignmentForm.title.trim(),
+        description: assignmentForm.description.trim(),
+        due_date: assignmentForm.due_date,
+        max_marks: Number(assignmentForm.max_marks),
+      };
+
+      const created = await apiRequest(
+        `/courses/${encodeURIComponent(
+          selectedAssignmentCourse.code
+        )}/assignments/`,
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      // Add the newly created assignment to the list
+      setCourseAssignments((previous) => [
+        ...previous,
+        created,
+      ]);
+
+      // Update the assignment count of the course
+      setAssignmentCourses((previous) =>
+        previous.map((course) =>
+          course.code === selectedAssignmentCourse.code
+            ? {
+                ...course,
+                assignment_count:
+                  Number(course.assignment_count || 0) + 1,
+              }
+            : course
+        )
+      );
+
+      setAssignmentMessage("Assignment created successfully!");
+
+      setShowAssignmentForm(false);
+
+      setAssignmentForm({
+        title: "",
+        description: "",
+        due_date: "",
+        max_marks: "1",
+      });
+
+    } catch (err) {
+      if (err.message === "SESSION_EXPIRED") {
+        handleError(err);
+      } else {
+        setAssignmentError(err.message);
+      }
+    } finally {
+      setCreatingAssignment(false);
+    }
+  }
 
   // LOAD PENDING ENROLLMENT REQUESTS
   const loadRequests = useCallback(async () => {
@@ -239,6 +379,18 @@ function FacultyDashboard({ onLogout }) {
     setSelectedGradeCourse(null);
     setPreviousStudents([]);
     setGradeView(false);
+
+    // Load assignment courses when the Assignments page opens
+    if (item === "Assignments") {
+      setSelectedAssignmentCourse(null);
+      setCourseAssignments([]);
+      setAssignmentSearch("");
+      setAssignmentMessage("");
+      setAssignmentError("");
+
+      loadAssignmentCourses();
+    }
+
     goTo(item);
   }
 
@@ -356,6 +508,18 @@ function FacultyDashboard({ onLogout }) {
     `${student.name} ${student.roll_no} ${student.email} ${student.department}`
       .toLowerCase()
       .includes(search.toLowerCase())
+  );
+
+  const filteredAssignmentCourses = assignmentCourses.filter((course) =>
+    `${course.code} ${course.name}`
+      .toLowerCase()
+      .includes(assignmentSearch.toLowerCase())
+  );
+
+  const filteredCourseAssignments = courseAssignments.filter((assignment) =>
+    `${assignment.title} ${assignment.description || ""}`
+      .toLowerCase()
+      .includes(assignmentSearch.toLowerCase())
   );
 
   const filteredPreviousStudents = previousStudents.filter((student) =>
@@ -832,24 +996,316 @@ function FacultyDashboard({ onLogout }) {
 
             </section>
           )}
-
+          
+          
           {/* ASSIGNMENTS */}
           {activeItem === "Assignments" && (
-            <section className="dashboard-panel role-panel">
+          <section className="dashboard-panel role-panel">
 
-              <PanelHeading
-                title="Assignments"
-                subtitle="Assignment management will be connected later"
-              />
+          {!selectedAssignmentCourse ? (
+          <>
+          <PanelHeading
+            title="Assignments"
+            subtitle="Select a current course to manage its assignments"
+          />
 
-              <p className="role-note">
-                Your current backend does not provide faculty
-                assignment-management APIs. We will connect this
-                section once those APIs are available.
-              </p>
+          <SearchRow
+            count={filteredAssignmentCourses.length}
+            noun="courses"
+            value={assignmentSearch}
+            onChange={setAssignmentSearch}
+            placeholder="Search courses..."
+          />
 
-            </section>
+          {assignmentLoading ? (
+            <p className="role-note">Loading courses...</p>
+          ) : assignmentError ? (
+            <div className="course-error">
+              {assignmentError}
+              <button
+                className="course-retry"
+                onClick={loadAssignmentCourses}
+              >
+                <RefreshCw size={14} />
+                Retry
+              </button>
+            </div>
+          ) : filteredAssignmentCourses.length === 0 ? (
+            <p className="role-note">
+              No current courses found.
+            </p>
+          ) : (
+            <div className="role-class-grid">
+
+              {filteredAssignmentCourses.map((course) => (
+                <article
+                  className="role-class-card"
+                  key={course.code}
+                >
+                  <div className="role-class-top">
+                    <span className="role-course-code">
+                      {course.code}
+                    </span>
+
+                    <span className="role-class-count">
+                      <ClipboardCheck size={14} />
+                      {course.assignment_count ?? 0} Assignments
+                    </span>
+                  </div>
+
+                  <h3>{course.name}</h3>
+
+                  <button
+                    className="role-text-button"
+                    onClick={() => openCourseAssignments(course)}
+                  >
+                    View Assignments
+                    <ArrowUpRight size={15} />
+                  </button>
+
+                </article>
+              ))}
+
+            </div>
           )}
+        </>
+      ) : (
+        <>
+          <PanelHeading
+            title={selectedAssignmentCourse.name}
+            subtitle={`Course Code: ${selectedAssignmentCourse.code}`}
+            action="Back to Courses"
+            onAction={() => {
+              setSelectedAssignmentCourse(null);
+              setCourseAssignments([]);
+              setAssignmentSearch("");
+              setAssignmentError("");
+              setAssignmentMessage("");
+            }}
+          />
+
+          {assignmentMessage && (
+            <div className="course-success">
+              <CheckCircle2 size={17} />
+              {assignmentMessage}
+            </div>
+          )}
+
+          {assignmentError && (
+            <div className="course-error">
+              {assignmentError}
+            </div>
+          )}
+
+          <div className="assignment-toolbar">
+            <h3>Course Assignments</h3>
+
+            <button
+              className="role-primary-button"
+              onClick={() => {
+                setAssignmentError("");
+                setAssignmentMessage("");
+                setShowAssignmentForm(true);
+              }}
+            >
+              + Create Assignment
+            </button>
+          </div>
+
+          {!assignmentLoading && courseAssignments.length > 0 && (
+            <SearchRow
+              count={filteredCourseAssignments.length}
+              noun="assignments"
+              value={assignmentSearch}
+              onChange={setAssignmentSearch}
+              placeholder="Search assignments..."
+            />
+          )}
+
+          {assignmentLoading ? (
+            <p className="role-note">Loading assignments...</p>
+          ) : courseAssignments.length === 0 ? (
+            <div className="assignment-empty">
+              <ClipboardCheck size={35} />
+              <h3>No assignments yet</h3>
+              <p>Create your first assignment for this course.</p>
+            </div>
+          ) : filteredCourseAssignments.length === 0 ? (
+            <p className="role-note">
+              No matching assignments found.
+            </p>
+          ) : (
+            <div className="assignment-list">
+
+              {filteredCourseAssignments.map((assignment) => (
+                <article
+                  className="assignment-card"
+                  key={assignment.id}
+                >
+                  <div className="assignment-card-heading">
+                    <div>
+                      <h3>{assignment.title}</h3>
+                      <p>
+                        {assignment.description ||
+                          "No description provided."}
+                      </p>
+                    </div>
+
+                    <span className="assignment-marks">
+                      {assignment.max_marks} Marks
+                    </span>
+                  </div>
+
+                  <div className="assignment-details">
+                    <span>
+                      Due: {formatDate(assignment.due_date)}
+                    </span>
+
+                    <span>
+                      Students: {assignment.student_count ?? 0}
+                    </span>
+
+                    <span>
+                      Submitted: {assignment.submission_count ?? 0}
+                      /{assignment.student_count ?? 0}
+                    </span>
+
+                    <span>
+                      Graded: {assignment.graded_count ?? 0}
+                      /{assignment.student_count ?? 0}
+                    </span>
+                  </div>
+                </article>
+              ))}
+
+            </div>
+          )}
+
+          {/* CREATE ASSIGNMENT MODAL */}
+          {showAssignmentForm && (
+            <div
+              className="role-modal-backdrop"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget &&
+                    !creatingAssignment) {
+                  setShowAssignmentForm(false);
+                }
+              }}
+            >
+              <form
+                className="role-create-modal assignment-modal"
+                onSubmit={handleCreateAssignment}
+              >
+                <h3>Create Assignment</h3>
+
+                <p>
+                  Create an assignment for{" "}
+                  <strong>{selectedAssignmentCourse.code}</strong>.
+                </p>
+
+                <label>
+                  Assignment Title *
+                  <input
+                    type="text"
+                    required
+                    maxLength={200}
+                    placeholder="Enter assignment title"
+                    value={assignmentForm.title}
+                    onChange={(event) =>
+                      setAssignmentForm({
+                        ...assignmentForm,
+                        title: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Description
+                  <textarea
+                    rows={4}
+                    placeholder="Enter assignment instructions..."
+                    value={assignmentForm.description}
+                    onChange={(event) =>
+                      setAssignmentForm({
+                        ...assignmentForm,
+                        description: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Due Date *
+                  <input
+                    type="date"
+                    required
+                    min={new Date(
+                      Date.now() - new Date().getTimezoneOffset() * 60000
+                    ).toISOString().slice(0, 10)}
+                    value={assignmentForm.due_date}
+                    onChange={(event) =>
+                      setAssignmentForm({
+                        ...assignmentForm,
+                        due_date: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Maximum Marks *
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    step="1"
+                    placeholder="Enter maximum marks"
+                    value={assignmentForm.max_marks}
+                    onChange={(event) =>
+                      setAssignmentForm({
+                        ...assignmentForm,
+                        max_marks: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+
+                {assignmentError && (
+                  <div className="course-error">
+                    {assignmentError}
+                  </div>
+                )}
+
+                <div className="role-modal-actions">
+                  <button
+                    type="button"
+                    className="assignment-cancel-button"
+                    disabled={creatingAssignment}
+                    onClick={() => setShowAssignmentForm(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="role-primary-button"
+                    disabled={creatingAssignment}
+                  >
+                    {creatingAssignment
+                      ? "Creating..."
+                      : "Create Assignment"}
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )}
+
 
           {/* HELP & CONTACT */}
           {activeItem === "Help & Contact" && (
