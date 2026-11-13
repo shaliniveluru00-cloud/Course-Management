@@ -38,13 +38,27 @@ function Sidebar({ activeItem, onNavigate, role   }) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">
-        <Landmark size={35} />
+      
+      <div
+        className="sidebar-brand"
+        role="button"
+        tabIndex={0}
+        onClick={() => onNavigate("Dashboard")}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onNavigate("Dashboard");
+          }
+        }}
+        style={{ cursor: "pointer" }}
+      >
+      <Landmark size={35} />
         <div>
           <h2>Campus CMS</h2>
           <p>{portalName}</p>
         </div>
       </div>
+
 
       <div className="sidebar-menu">
         <p className="menu-heading">MAIN MENU</p>

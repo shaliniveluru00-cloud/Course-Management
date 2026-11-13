@@ -1,5 +1,5 @@
 
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell } from "lucide-react";
 
 import "./Navbar.css";
 
@@ -42,7 +42,6 @@ function Navbar({ pageTitle }) {
             <p>{role}</p>
           </div>
 
-          <ChevronDown size={17} />
         </div>
       </div>
     </header>

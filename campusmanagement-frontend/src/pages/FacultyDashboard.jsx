@@ -11,7 +11,12 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
-  LifeBuoy,
+  Info,
+  Landmark,
+  MapPin,
+  Phone,
+  Mail,
+  Clock3,
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
@@ -19,6 +24,13 @@ import Navbar from "../components/Navbar";
 import "./RoleDashboards.css";
 
 const API_BASE = "http://localhost:8000/api/faculty";
+
+const ADMIN_OFFICE_INFO = {
+  address: "Main Administration Block, IIT Dharwad, Karnataka, India",
+  phone: "+91 836 2212 800",
+  email: "administration@iitdh.ac.in",
+  availability: "Monday – Friday, 9:00 AM – 5:30 PM",
+};
 
 const getToken = () => localStorage.getItem("token");
 
@@ -996,7 +1008,7 @@ function FacultyDashboard({ onLogout }) {
 
             </section>
           )}
-          
+
           
           {/* ASSIGNMENTS */}
           {activeItem === "Assignments" && (
@@ -1305,21 +1317,85 @@ function FacultyDashboard({ onLogout }) {
       )}
     </section>
   )}
-
-
+          
           {/* HELP & CONTACT */}
+
           {activeItem === "Help & Contact" && (
-            <section className="dashboard-panel role-panel">
+            <section className="dashboard-panel role-panel role-help-panel">
 
               <PanelHeading
                 title="Help & Contact"
-                subtitle="Get in touch with the campus support teams"
+                subtitle="Contact the college administration office for assistance"
               />
 
-              <div className="role-note">
-                <LifeBuoy size={18} />
-                Contact the administration office for assistance.
+              <div className="role-help-intro">
+                <Info size={22} />
+                <p>
+                  For administrative queries, document-related assistance,
+                  or general campus support, contact the administration
+                  office using the details below. Please confirm office
+                  availability before visiting.
+                </p>
               </div>
+
+              <h3 className="role-contact-heading">
+                Administration Office:
+              </h3>
+
+              <article className="role-course-card role-admin-contact-card">
+
+                <div className="role-admin-card-header">
+
+                  <div className="role-admin-icon">
+                    <Landmark size={23} />
+                  </div>
+
+                  <div>
+                    <h3>College Administration</h3>
+                    <p>Student support and administrative assistance</p>
+                  </div>
+
+                </div>
+
+                <div className="role-admin-details">
+
+                  <div className="role-contact-detail">
+                    <MapPin size={17} />
+                    <span>
+                      <strong>Address</strong>
+                      {ADMIN_OFFICE_INFO.address}
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Phone size={17} />
+                    <span>
+                      <strong>Office Number</strong>
+                      {ADMIN_OFFICE_INFO.phone}
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Mail size={17} />
+                    <span>
+                      <strong>Email</strong>
+                      <a href={`mailto:${ADMIN_OFFICE_INFO.email}`}>
+                        {ADMIN_OFFICE_INFO.email}
+                      </a>
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Clock3 size={17} />
+                    <span>
+                      <strong>Available Hours</strong>
+                      {ADMIN_OFFICE_INFO.availability}
+                    </span>
+                  </div>
+
+                </div>
+
+              </article>
 
             </section>
           )}
