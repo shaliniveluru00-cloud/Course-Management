@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   BookOpen,
@@ -146,76 +146,105 @@ function useDebouncedValue(value, delay = 300) {
 // --------------------------------------------------
 
 function useCourseList(endpoint, search, onUnauthorized) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const debouncedSearch = useDebouncedValue(search).trim();
+  const [reloadCount, setReloadCount] = useState(0);
+  const [result, setResult] = useState({ key: null, items: [], error: "" });
 
-  const debouncedSearch = useDebouncedValue(search);
-
-  const fetchItems = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        onUnauthorized?.();
-        throw new Error("Please log in again.");
-      }
-
-      const params = new URLSearchParams();
-
-      if (debouncedSearch.trim()) {
-        params.set("search", debouncedSearch.trim());
-      }
-
-      const query = params.toString();
-
-      const response = await fetch(
-        `${API_BASE}${endpoint}${query ? `?${query}` : ""}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status === 401) {
-        onUnauthorized?.();
-        throw new Error("Your session has expired. Please log in again.");
-      }
-
-      const data = await getResponseData(response);
-
-      if (!response.ok) {
-        throw new Error(
-          getErrorMessage(data, `Unable to load courses (${response.status}).`)
-        );
-      }
-
-      setItems(normalizeCourses(data));
-    } catch (err) {
-      console.error(`Course API error (${endpoint}):`, err);
-      setError(err.message || "Something went wrong.");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Always call the latest onUnauthorized without making the request reload
+  const onUnauthorizedRef = useRef(onUnauthorized);
 
   useEffect(() => {
-    fetchItems();
-  }, [endpoint, debouncedSearch]);
+    onUnauthorizedRef.current = onUnauthorized;
+  });
+
+  // One key per request (endpoint + search + manual reloads). While the saved
+  // result belongs to an older key, we are still loading.
+  const requestKey = `${endpoint}|${debouncedSearch}|${reloadCount}`;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      let items = [];
+      let error = "";
+
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          onUnauthorizedRef.current?.();
+          throw new Error("Please log in again.");
+        }
+
+        const params = new URLSearchParams();
+
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        }
+
+        const query = params.toString();
+
+        const response = await fetch(
+          `${API_BASE}${endpoint}${query ? `?${query}` : ""}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 401) {
+          onUnauthorizedRef.current?.();
+          throw new Error("Your session has expired. Please log in again.");
+        }
+
+        const data = await getResponseData(response);
+
+        if (!response.ok) {
+          throw new Error(
+            getErrorMessage(data, `Unable to load courses (${response.status}).`)
+          );
+        }
+
+        items = normalizeCourses(data);
+      } catch (err) {
+        console.error(`Course API error (${endpoint}):`, err);
+        error = err.message || "Something went wrong.";
+      }
+
+      if (!cancelled) {
+        setResult({ key: requestKey, items, error });
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, endpoint, debouncedSearch]);
+
+  const setItems = useCallback((updater) => {
+    setResult((previous) => ({
+      ...previous,
+      items: typeof updater === "function" ? updater(previous.items) : updater,
+    }));
+  }, []);
+
+  const refresh = useCallback(() => {
+    setReloadCount((count) => count + 1);
+  }, []);
+
+  const loading = result.key !== requestKey;
 
   return {
-    items,
+    items: result.items,
     setItems,
     loading,
-    error,
-    refresh: fetchItems,
+    error: loading ? "" : result.error,
+    refresh,
   };
 }
 
