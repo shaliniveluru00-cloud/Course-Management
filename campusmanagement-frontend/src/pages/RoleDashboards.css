@@ -322,9 +322,345 @@
   opacity: 1;
 }
 
+
+/* ==========================================
+   HELP & CONTACT
+========================================== */
+
+.role-help-panel {
+  --help-orange: #f97316;
+  --help-orange-dark: #c2410c;
+  --help-orange-light: #fff7ed;
+}
+
+.role-help-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 22px 0 28px;
+  padding: 17px 19px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #7c2d12;
+}
+
+.role-help-intro svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ea580c;
+}
+
+.role-help-intro p {
+  margin: 0;
+  color: #7c2d12;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.role-contact-heading {
+  margin: 0 0 15px;
+  color: #292524;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.role-admin-contact-card {
+  width: 100%;
+  max-width: 760px;
+  padding: 24px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(124, 45, 18, 0.06);
+}
+
+.role-admin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ffedd5;
+}
+
+.role-admin-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.role-admin-card-header h3 {
+  margin: 0 0 5px;
+  color: #292524;
+  font-size: 17px;
+}
+
+.role-admin-card-header p {
+  margin: 0;
+  color: #78716c;
+  font-size: 13px;
+}
+
+.role-admin-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+  padding-top: 21px;
+}
+
+.role-admin-details .role-contact-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  color: #57534e;
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.role-admin-details .role-contact-detail > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ea580c;
+}
+
+.role-admin-details .role-contact-detail span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.role-admin-details .role-contact-detail strong {
+  color: #292524;
+  font-size: 13px;
+}
+
+.role-admin-details a {
+  color: #c2410c;
+  text-decoration: none;
+}
+
+.role-admin-details a:hover {
+  text-decoration: underline;
+}
+
+.role-contact-disclaimer {
+  max-width: 760px;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+/* Responsive layout */
+
+@media (max-width: 640px) {
+  .role-admin-contact-card {
+    padding: 18px;
+  }
+
+  .role-admin-details {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .role-help-intro {
+    padding: 14px;
+  }
+}
+
 @media (max-width: 650px) {
   .course-search-box {
     min-width: 150px;
+  }
+}
+
+/* ==========================================
+   GLOBAL CLICKABLE CURSOR EFFECT
+   STUDENT AND FACULTY DASHBOARDS
+========================================== */
+
+/* Buttons and interactive elements */
+.role-panel button,
+.role-panel a,
+.role-panel [role="button"],
+.role-panel input[type="button"],
+.role-panel input[type="submit"],
+.role-panel input[type="reset"],
+.role-panel select,
+.role-panel summary,
+.course-tab,
+.course-enroll-button,
+.role-text-button,
+.role-primary-button,
+.role-modal-actions button,
+.role-admin-details a,
+.role-schedule-row[role="button"],
+.role-grade-row[role="button"],
+.role-class-card[role="button"],
+.role-course-card[role="button"] {
+  cursor: pointer;
+}
+
+/* Disabled elements should not show a pointer */
+button:disabled,
+.course-enroll-button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* Clickable icons */
+button svg,
+a svg,
+[role="button"] svg {
+  cursor: pointer;
+}
+
+/* Input fields retain their normal text cursor */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea {
+  cursor: text;
+}
+
+/* ==========================================
+   FACULTY DASHBOARD - API INTEGRATION
+========================================== */
+
+.role-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: #95877D;
+  font-size: 13px;
+}
+
+.role-spin {
+  animation: role-spin 1s linear infinite;
+}
+
+@keyframes role-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.role-request-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.role-approve-button,
+.role-reject-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.role-approve-button {
+  border: 1px solid #b9dfc2;
+  background: #eff9f1;
+  color: #287a3d;
+}
+
+.role-reject-button {
+  border: 1px solid #f2c4bd;
+  background: #fff2ef;
+  color: #bd493b;
+}
+
+.role-approve-button:hover {
+  background: #dff2e3;
+}
+
+.role-reject-button:hover {
+  background: #ffe5e0;
+}
+
+.role-approve-button:disabled,
+.role-reject-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.role-report-section {
+  margin-top: 28px;
+}
+
+.role-report-section h3 {
+  margin-bottom: 15px;
+  color: #40362E;
+  font-size: 15px;
+}
+
+@media (max-width: 650px) {
+  .role-request-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+/* FACULTY COURSE-WISE REPORTS */
+
+.role-course-report-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.role-course-report-details p {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.role-course-report-details svg {
+  color: #ed781f;
+  flex-shrink: 0;
+}
+/* Add space before Completed Courses */
+.faculty-completed-section {
+  margin-top: 45px !important;
+  padding-top: 25px;
+}
+
+/* FACULTY DASHBOARD - THREE STAT CARDS */
+.stats-grid.faculty-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* GAP BETWEEN CURRENT AND COMPLETED COURSES */
+.faculty-course-section + .faculty-course-section {
+  margin-top: 45px;
+  padding-top: 25px;
+}
+
+/* RESPONSIVE FACULTY STAT CARDS */
+@media (max-width: 700px) {
+  .stats-grid.faculty-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 

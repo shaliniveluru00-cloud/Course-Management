@@ -1,9 +1,7 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   BookOpen,
-  ClipboardCheck,
   Award,
   Clock3,
   ArrowUpRight,
@@ -12,61 +10,18 @@ import {
   CheckCircle2,
   Search,
   RefreshCw,
+  Mail,
+  MapPin,
+  Phone,
+  ArrowLeft,
+  Info,
+  Landmark,
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 
 import "./RoleDashboards.css";
-
-// --------------------------------------------------
-// EXISTING DASHBOARD DATA
-// --------------------------------------------------
-
-const assignments = [
-  {
-    title: "Binary Search Tree Implementation",
-    course: "Data Structures",
-    due: "Nov 10, 2026",
-    status: "Pending",
-  },
-  {
-    title: "SQL Queries – Lab 4",
-    course: "Database Management",
-    due: "Nov 12, 2026",
-    status: "Submitted",
-  },
-  {
-    title: "Graph Theory Worksheet",
-    course: "Discrete Mathematics",
-    due: "Nov 15, 2026",
-    status: "Pending",
-  },
-];
-
-const grades = [
-  { name: "Data Structures – Quiz 2", course: "CS301", score: "18/20" },
-  { name: "DBMS – Lab Assessment", course: "CS305", score: "24/25" },
-  { name: "Discrete Math – Test 1", course: "MA202", score: "42/50" },
-];
-
-const scheduleItems = [
-  {
-    time: "09:00 – 10:00",
-    title: "Data Structures",
-    room: "Block A · Room 204",
-  },
-  {
-    time: "11:00 – 12:00",
-    title: "Database Management",
-    room: "Block C · Lab 02",
-  },
-  {
-    time: "14:00 – 15:00",
-    title: "Discrete Mathematics",
-    room: "Block B · Room 105",
-  },
-];
 
 const API_BASE = "http://localhost:8000/api/student";
 
@@ -76,8 +31,12 @@ const COURSE_TABS = [
   { id: "previous", label: "Previously Enrolled" },
 ];
 
-const matches = (text, query) =>
-  String(text ?? "").toLowerCase().includes(query.trim().toLowerCase());
+const ADMIN_OFFICE_INFO = {
+  address: "Main Administration Block, IIT Dharwad, Karnataka, India",
+  phone: "+91 836 2212 800",
+  email: "administration@iitdh.ac.in",
+  availability: "Monday – Friday, 9:00 AM – 5:30 PM",
+};
 
 // --------------------------------------------------
 // API HELPERS
@@ -91,7 +50,8 @@ async function getResponseData(response) {
   try {
     return JSON.parse(text);
   } catch {
-    return { message: text };
+    // Non-JSON body (e.g. an HTML 404 page) - never show raw markup to users.
+    return /^\s*<(!doctype|html)/i.test(text) ? {} : { message: text };
   }
 }
 
@@ -204,7 +164,12 @@ function useCourseList(endpoint, search, onUnauthorized) {
 
         if (!response.ok) {
           throw new Error(
-            getErrorMessage(data, `Unable to load courses (${response.status}).`)
+            response.status === 404
+              ? "Courses are not available yet. Please try again later."
+              : getErrorMessage(
+                  data,
+                  `Unable to load courses (${response.status}).`
+                )
           );
         }
 
@@ -249,6 +214,112 @@ function useCourseList(endpoint, search, onUnauthorized) {
 }
 
 // --------------------------------------------------
+// STUDENT DATA API HOOK
+// --------------------------------------------------
+
+function useStudentData(endpoint, search = "", onUnauthorized) {
+  const debouncedSearch = useDebouncedValue(search).trim();
+  const [result, setResult] = useState({ key: null, items: [], error: "" });
+
+  // Always call the latest onUnauthorized without making the request reload
+  const onUnauthorizedRef = useRef(onUnauthorized);
+
+  useEffect(() => {
+    onUnauthorizedRef.current = onUnauthorized;
+  });
+
+  // No endpoint means "nothing to load yet" (for example, no folder selected)
+  const requestKey = endpoint ? `${endpoint}|${debouncedSearch}` : null;
+
+  useEffect(() => {
+    if (!requestKey) return undefined;
+
+    let cancelled = false;
+
+    async function fetchData() {
+      let items = [];
+      let error = "";
+
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          onUnauthorizedRef.current?.();
+          throw new Error("Please log in again.");
+        }
+
+        const params = new URLSearchParams();
+
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        }
+
+        const query = params.toString();
+
+        const response = await fetch(
+          `${API_BASE}${endpoint}${query ? `?${query}` : ""}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 401) {
+          onUnauthorizedRef.current?.();
+          throw new Error("Your session has expired. Please log in again.");
+        }
+
+        const data = await getResponseData(response);
+
+        if (!response.ok) {
+          throw new Error(
+            getErrorMessage(data, `Unable to load data (${response.status}).`)
+          );
+        }
+
+        items = Array.isArray(data)
+          ? data
+          : data.results || data.items || data.courses || data.assignments || [];
+      } catch (err) {
+        console.error(`Student API error (${endpoint}):`, err);
+        error = err.message || "Something went wrong.";
+      }
+
+      if (!cancelled) {
+        setResult({ key: requestKey, items, error });
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, endpoint, debouncedSearch]);
+
+  if (!requestKey) {
+    // Nothing selected: forget the old result, so opening the same item again
+    // starts with a fresh "loading" instead of showing the previous data
+    if (result.key !== null) {
+      setResult({ key: null, items: [], error: "" });
+    }
+
+    return { items: [], loading: false, error: "" };
+  }
+
+  const loading = result.key !== requestKey;
+
+  return {
+    items: result.items,
+    loading,
+    error: loading ? "" : result.error,
+  };
+}
+
+// --------------------------------------------------
 // STUDENT DASHBOARD
 // --------------------------------------------------
 
@@ -264,7 +335,7 @@ function StudentDashboard({ onLogout }) {
   const [gradeSearch, setGradeSearch] = useState("");
   const [scheduleSearch, setScheduleSearch] = useState("");
 
-  // ONE ACTIVE COURSE TAB STATE
+  // Active course tab
   const [activeCourseTab, setActiveCourseTab] = useState("enrolled");
 
   // Independent search states for each tab
@@ -276,9 +347,28 @@ function StudentDashboard({ onLogout }) {
   const [enrollmentMessage, setEnrollmentMessage] = useState("");
   const [enrollmentError, setEnrollmentError] = useState("");
   const [submittingCourse, setSubmittingCourse] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  // Grades API
+  const gradesData = useStudentData("/grades/", gradeSearch, onLogout);
+
+  // Schedule API
+  const scheduleData = useStudentData("/schedule/", scheduleSearch, onLogout);
+
+  // Course folders shown on the Assignments page
+  const assignmentCourses = useStudentData("/courses/", search, onLogout);
+
+  // Fetch assignments only after a course folder is selected
+  const courseAssignments = useStudentData(
+    selectedCourse
+      ? `/courses/${encodeURIComponent(selectedCourse.code)}/assignments/`
+      : null,
+    "",
+    onLogout
+  );
 
   // --------------------------------------------------
-  // THREE INDEPENDENT API CONNECTIONS
+  // THREE INDEPENDENT COURSE API CONNECTIONS
   // --------------------------------------------------
 
   const availableCourses = useCourseList(
@@ -343,10 +433,7 @@ function StudentDashboard({ onLogout }) {
 
   function getEnrollmentButton(course) {
     const seatsLeft = Number(course.seats_left ?? 0);
-
-    const status = String(
-      course.request_status || ""
-    ).toLowerCase();
+    const status = String(course.request_status || "").toLowerCase();
 
     if (seatsLeft <= 0) {
       return {
@@ -400,19 +487,16 @@ function StudentDashboard({ onLogout }) {
     setSubmittingCourse(course.code);
 
     try {
-      const response = await fetch(
-        `${API_BASE}/enrollments/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            course: course.code,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/enrollments/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          course: course.code,
+        }),
+      });
 
       const data = await getResponseData(response);
 
@@ -454,7 +538,6 @@ function StudentDashboard({ onLogout }) {
         return;
       }
 
-      // Invalid request or course not found
       if (response.status === 400 || response.status === 404) {
         throw new Error(
           getErrorMessage(data, "Unable to process enrollment request.")
@@ -475,42 +558,6 @@ function StudentDashboard({ onLogout }) {
   }
 
   // --------------------------------------------------
-  // PREVIOUS COURSE ATTENDANCE
-  // --------------------------------------------------
-
-  function getAttendance(course) {
-    if (course.attendance !== null && course.attendance !== undefined) {
-      return Number(course.attendance);
-    }
-
-    const held = Number(course.classes_held || 0);
-    const attended = Number(course.classes_attended || 0);
-
-    if (held === 0) return 0;
-
-    return (attended / held) * 100;
-  }
-
-  // --------------------------------------------------
-  // OTHER DASHBOARD FILTERS
-  // --------------------------------------------------
-
-  const filteredAssignments = assignments.filter((item) =>
-    matches(`${item.title} ${item.course}`, search)
-  );
-
-  const filteredGrades = grades.filter((grade) =>
-    matches(`${grade.name} ${grade.course}`, gradeSearch)
-  );
-
-  const filteredSchedule = scheduleItems.filter((schedule) =>
-    matches(
-      `${schedule.title} ${schedule.room} ${schedule.time}`,
-      scheduleSearch
-    )
-  );
-
-  // --------------------------------------------------
   // NAVIGATION
   // --------------------------------------------------
 
@@ -528,7 +575,6 @@ function StudentDashboard({ onLogout }) {
 
   return (
     <div className="admin-layout">
-
       <Sidebar
         role="Student"
         activeItem={activeItem}
@@ -536,7 +582,6 @@ function StudentDashboard({ onLogout }) {
       />
 
       <main className="admin-main">
-
         <Navbar
           pageTitle={activeItem}
           role="Student"
@@ -545,9 +590,7 @@ function StudentDashboard({ onLogout }) {
 
         <div className="dashboard-content">
 
-          {/* ==========================================
-              DASHBOARD HOME
-          ========================================== */}
+          {/* DASHBOARD HOME */}
 
           {activeItem === "Dashboard" && (
             <>
@@ -562,7 +605,9 @@ function StudentDashboard({ onLogout }) {
                 </div>
               </section>
 
-                <div className="stats-grid student-stats-grid">
+              {/* DASHBOARD STATISTICS */}
+
+              <div className="stats-grid">
                 <Stat
                   icon={BookOpen}
                   value={
@@ -574,21 +619,29 @@ function StudentDashboard({ onLogout }) {
                 />
 
                 <Stat
-                  icon={ClipboardCheck}
-                  value="4"
-                  label="Pending Assignments"
+                  icon={Clock3}
+                  value={
+                    scheduleData.loading
+                      ? "..."
+                      : scheduleData.items.length
+                  }
+                  label="Scheduled Classes"
                 />
 
                 <Stat
-                icon={Award}
-                value="8.6"
-                label="Current CGPA"
+                  icon={Award}
+                  value={
+                    gradesData.loading
+                      ? "..."
+                      : gradesData.items.length
+                  }
+                  label="Grades Published"
                 />
-
               </div>
 
-              <section className="dashboard-panel role-panel">
+              {/* MY COURSES */}
 
+              <section className="dashboard-panel role-panel">
                 <PanelHeading
                   title="My Courses"
                   subtitle="Your enrolled courses this semester"
@@ -601,49 +654,56 @@ function StudentDashboard({ onLogout }) {
                 ) : enrolledCourses.error ? (
                   <p className="role-error">{enrolledCourses.error}</p>
                 ) : (
-                  <CourseGrid
-                    items={enrolledCourses.items.slice(0, 3)}
-                  />
+                  <CourseGrid items={enrolledCourses.items.slice(0, 3)} />
                 )}
-
               </section>
 
-              <section className="dashboard-panel role-panel">
+              {/* YOUR ASSIGNMENTS */}
 
+              <section className="dashboard-panel role-panel">
                 <PanelHeading
-                  title="Upcoming Assignments"
-                  subtitle="Stay on top of your coursework"
-                  action="See all"
+                  title="Your Assignments"
+                  subtitle="Check your submission status and grades released by faculty"
+                  action="View assignments"
                   onAction={() => setActiveItem("Assignments")}
                 />
 
-                <AssignmentTable items={assignments.slice(0, 2)} />
-
+                <p className="role-note">
+                  Select a course to view its assignments, submission status,
+                  submitted dates, and grades if they have been published.
+                </p>
               </section>
 
+              {/* GRADES AND SCHEDULE */}
+
               <div className="role-two-column">
-                <GradesPanel onView={() => setActiveItem("Grades")} />
-                <SchedulePanel />
+                <GradesPanel
+                  items={gradesData.items.slice(0, 3)}
+                  loading={gradesData.loading}
+                  error={gradesData.error}
+                  onView={() => setActiveItem("Grades")}
+                />
+
+                <SchedulePanel
+                  items={scheduleData.items.slice(0, 3)}
+                  loading={scheduleData.loading}
+                  error={scheduleData.error}
+                  onView={() => setActiveItem("Schedule")}
+                />
               </div>
             </>
           )}
 
-          {/* ==========================================
-              MY COURSES - THREE SUB TABS
-          ========================================== */}
+          {/* MY COURSES - THREE SUB TABS */}
 
           {activeItem === "My Courses" && (
             <section className="dashboard-panel role-panel">
-
               <PanelHeading
                 title="My Courses"
                 subtitle="Explore, manage and track your academic courses"
               />
 
-              {/* COURSE SUB TABS */}
-
               <div className="course-tabs">
-
                 {COURSE_TABS.map((tab) => (
                   <button
                     key={tab.id}
@@ -659,13 +719,11 @@ function StudentDashboard({ onLogout }) {
                     {tab.label}
                   </button>
                 ))}
-
               </div>
 
               {/* INDEPENDENT SEARCH */}
 
               <div className="role-search-row course-search-row">
-
                 <span>
                   {currentTab.data.length} {currentTab.noun}
                 </span>
@@ -676,14 +734,11 @@ function StudentDashboard({ onLogout }) {
                   <input
                     type="text"
                     value={currentTab.search}
-                    onChange={(e) =>
-                      currentTab.setSearch(e.target.value)
-                    }
+                    onChange={(e) => currentTab.setSearch(e.target.value)}
                     placeholder={`Search ${currentTab.noun}...`}
                     aria-label={`Search ${currentTab.noun}`}
                   />
                 </div>
-
               </div>
 
               {/* ENROLLMENT FEEDBACK */}
@@ -704,9 +759,7 @@ function StudentDashboard({ onLogout }) {
               {/* LOADING */}
 
               {currentTab.loading && (
-                <p className="role-note">
-                  Loading courses...
-                </p>
+                <p className="role-note">Loading courses...</p>
               )}
 
               {/* ERROR */}
@@ -730,25 +783,18 @@ function StudentDashboard({ onLogout }) {
               {!currentTab.loading &&
                 !currentTab.error &&
                 currentTab.data.length === 0 && (
-                  <p className="role-note">
-                    No courses found.
-                  </p>
+                  <p className="role-note">No courses found.</p>
                 )}
 
-              {/* =====================================
-                  AVAILABLE COURSES
-              ===================================== */}
+              {/* AVAILABLE COURSES */}
 
               {activeCourseTab === "available" &&
                 !currentTab.loading &&
                 !currentTab.error &&
                 currentTab.data.length > 0 && (
-
                   <div className="role-course-grid">
-
                     {currentTab.data.map((course, index) => {
                       const button = getEnrollmentButton(course);
-
                       const isSubmitting =
                         submittingCourse === course.code;
 
@@ -757,7 +803,6 @@ function StudentDashboard({ onLogout }) {
                           className="role-course-card"
                           key={course.id ?? course.code}
                         >
-
                           <div className={`role-course-icon tone-${index}`}>
                             <BookOpen size={21} />
                           </div>
@@ -792,46 +837,31 @@ function StudentDashboard({ onLogout }) {
                             disabled={button.disabled || isSubmitting}
                             onClick={() => handleEnrollment(course)}
                           >
-                            {isSubmitting
-                              ? "Processing..."
-                              : button.label}
+                            {isSubmitting ? "Processing..." : button.label}
                           </button>
-
                         </article>
                       );
                     })}
-
                   </div>
                 )}
 
-              {/* =====================================
-                  ENROLLED COURSES
-              ===================================== */}
+              {/* ENROLLED COURSES */}
 
               {activeCourseTab === "enrolled" &&
                 !currentTab.loading &&
                 !currentTab.error &&
                 currentTab.data.length > 0 && (
-
                   <CourseGrid items={currentTab.data} />
-
                 )}
 
-              {/* =====================================
-                  PREVIOUSLY ENROLLED COURSES
-              ===================================== */}
+              {/* PREVIOUSLY ENROLLED COURSES */}
 
               {activeCourseTab === "previous" &&
                 !currentTab.loading &&
                 !currentTab.error &&
                 currentTab.data.length > 0 && (
-
                   <div className="role-course-grid">
-
                     {currentTab.data.map((course, index) => {
-
-                      const attendance = getAttendance(course);
-
                       const status = String(
                         course.status || ""
                       ).toLowerCase();
@@ -843,7 +873,6 @@ function StudentDashboard({ onLogout }) {
                           className="role-course-card previous-course-card"
                           key={course.id ?? course.code}
                         >
-
                           <div className={`role-course-icon tone-${index}`}>
                             <BookOpen size={21} />
                           </div>
@@ -863,21 +892,7 @@ function StudentDashboard({ onLogout }) {
                             <strong>{course.grade || "—"}</strong>
                           </div>
 
-                          <div className="course-extra-details">
-                            <span>Attendance</span>
-                            <strong>{attendance.toFixed(1)}%</strong>
-                          </div>
-
-                          <div className="course-extra-details">
-                            <span>Classes attended</span>
-                            <strong>
-                              {course.classes_attended ?? 0}/
-                              {course.classes_held ?? 0}
-                            </strong>
-                          </div>
-
                           <div className="course-status-row">
-
                             <span
                               className={`course-status-badge ${
                                 completed ? "completed" : "failed"
@@ -885,85 +900,143 @@ function StudentDashboard({ onLogout }) {
                             >
                               {course.status || "Unknown"}
                             </span>
-
-                            {String(course.grade).toUpperCase() === "DX" && (
-                              <span
-                                className="course-dx-note"
-                                title="Debarred due to attendance below 60%"
-                              >
-                                DX: Attendance below 60%
-                              </span>
-                            )}
-
                           </div>
-
                         </article>
                       );
                     })}
-
                   </div>
                 )}
-
             </section>
           )}
 
-          {/* ==========================================
-              ASSIGNMENTS
-          ========================================== */}
+          {/* ASSIGNMENTS */}
 
           {activeItem === "Assignments" && (
             <section className="dashboard-panel role-panel">
+              {!selectedCourse ? (
+                <>
+                  <PanelHeading
+                    title="Assignments"
+                    subtitle="Select a course to view its assignments"
+                  />
 
-              <PanelHeading
-                title="Assignments"
-                subtitle="Search and track your coursework"
-              />
+                  <SearchRow
+                    count={assignmentCourses.items.length}
+                    noun="courses"
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Search courses..."
+                  />
 
-              <SearchRow
-                count={filteredAssignments.length}
-                noun="assignments"
-                value={search}
-                onChange={setSearch}
-                placeholder="Search assignments..."
-              />
+                  {assignmentCourses.loading ? (
+                    <p className="role-note">Loading courses...</p>
+                  ) : assignmentCourses.error ? (
+                    <p className="role-error">{assignmentCourses.error}</p>
+                  ) : assignmentCourses.items.length === 0 ? (
+                    <p className="role-note">Nothing found.</p>
+                  ) : (
+                    <div className="role-course-grid">
+                      {assignmentCourses.items.map((course, index) => (
+                        <button
+                          type="button"
+                          className="role-course-card assignment-course-button"
+                          key={course.id ?? course.code}
+                          onClick={() => setSelectedCourse(course)}
+                        >
+                          <div className={`role-course-icon tone-${index}`}>
+                            <BookOpen size={21} />
+                          </div>
 
-              <AssignmentTable items={filteredAssignments} />
+                          <span className="role-course-code">
+                            {course.code}
+                          </span>
 
+                          <h3>{course.name || course.course_name}</h3>
+
+                          <p>
+                            {course.faculty_name ||
+                              course.faculty ||
+                              "Faculty not assigned"}
+                          </p>
+
+                          <span className="view-button">
+                            View Assignments →
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="assignment-back-button"
+                    onClick={() => setSelectedCourse(null)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "20px",
+                      padding: "10px 16px",
+                      border: "1px solid #f97316",
+                      borderRadius: "8px",
+                      background: "#fff7ed",
+                      color: "#c2410c",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ArrowLeft size={17} />
+                    Back to Courses
+                  </button>
+
+                  <PanelHeading
+                    title={selectedCourse.name || selectedCourse.course_name}
+                    subtitle={`Assignments for ${selectedCourse.code}`}
+                  />
+
+                  {courseAssignments.loading ? (
+                    <p className="role-note">Loading assignments...</p>
+                  ) : courseAssignments.error ? (
+                    <p className="role-error">{courseAssignments.error}</p>
+                  ) : (
+                    <AssignmentList items={courseAssignments.items} />
+                  )}
+                </>
+              )}
             </section>
           )}
 
-          {/* ==========================================
-              GRADES
-          ========================================== */}
+          {/* GRADES */}
 
           {activeItem === "Grades" && (
             <GradesPanel
-              items={filteredGrades}
+              items={gradesData.items}
+              loading={gradesData.loading}
+              error={gradesData.error}
               searchValue={gradeSearch}
               onSearchChange={setGradeSearch}
             />
           )}
 
-          {/* ==========================================
-              SCHEDULE
-          ========================================== */}
+          {/* SCHEDULE */}
 
           {activeItem === "Schedule" && (
             <SchedulePanel
               full
-              items={filteredSchedule}
+              items={scheduleData.items}
+              loading={scheduleData.loading}
+              error={scheduleData.error}
               searchValue={scheduleSearch}
               onSearchChange={setScheduleSearch}
             />
           )}
 
-          {/* ==========================================
-              ANNOUNCEMENTS
-          ========================================== */}
+          {/* ANNOUNCEMENTS */}
 
           {activeItem === "Announcements" && (
             <section className="dashboard-panel role-panel">
-
               <PanelHeading
                 title="Announcements"
                 subtitle="Latest updates from your campus"
@@ -978,24 +1051,81 @@ function StudentDashboard({ onLogout }) {
                 title="Project review submissions"
                 detail="Submit your project synopsis before the department deadline."
               />
-
             </section>
           )}
 
+          {/* HELP & CONTACT */}
 
-          {/* SETTINGS */}
-
-          {/* ==========================================
-            HELP & CONTACT
-          ========================================== */}
-
-          {activeItem === "Help & Contact" && (
-            <section className="dashboard-panel role-panel">
-
+          {(activeItem === "Help & Contact" ||
+            activeItem === "Settings") && (
+            <section className="dashboard-panel role-panel role-help-panel">
               <PanelHeading
                 title="Help & Contact"
-                subtitle="Get in touch with the campus support teams"
+                subtitle="Contact the college administration office for assistance"
               />
+
+              <div className="role-help-intro">
+                <Info size={22} />
+                <p>
+                  For administrative queries, document-related assistance,
+                  or general campus support, contact the administration
+                  office using the details below. Please confirm office
+                  availability before visiting.
+                </p>
+              </div>
+
+              <h3 className="role-contact-heading">
+                Administration Office:
+              </h3>
+
+              <article className="role-course-card role-admin-contact-card">
+                <div className="role-admin-card-header">
+                  <div className="role-admin-icon">
+                    <Landmark size={23} />
+                  </div>
+
+                  <div>
+                    <h3>College Administration</h3>
+                    <p>Student support and administrative assistance</p>
+                  </div>
+                </div>
+
+                <div className="role-admin-details">
+                  <div className="role-contact-detail">
+                    <MapPin size={17} />
+                    <span>
+                      <strong>Address</strong>
+                      {ADMIN_OFFICE_INFO.address}
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Phone size={17} />
+                    <span>
+                      <strong>Office Number</strong>
+                      {ADMIN_OFFICE_INFO.phone}
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Mail size={17} />
+                    <span>
+                      <strong>Email</strong>
+                      <a href={`mailto:${ADMIN_OFFICE_INFO.email}`}>
+                        {ADMIN_OFFICE_INFO.email}
+                      </a>
+                    </span>
+                  </div>
+
+                  <div className="role-contact-detail">
+                    <Clock3 size={17} />
+                    <span>
+                      <strong>Available Hours</strong>
+                      {ADMIN_OFFICE_INFO.availability}
+                    </span>
+                  </div>
+                </div>
+              </article>
             </section>
           )}
 
@@ -1012,7 +1142,6 @@ function StudentDashboard({ onLogout }) {
 function Stat({ icon: Icon, value, label }) {
   return (
     <article className="stat-card">
-
       <div className="stat-top">
         <div className="stat-icon">
           <Icon size={23} />
@@ -1023,7 +1152,6 @@ function Stat({ icon: Icon, value, label }) {
 
       <h2>{value}</h2>
       <p>{label}</p>
-
     </article>
   );
 }
@@ -1031,7 +1159,6 @@ function Stat({ icon: Icon, value, label }) {
 function PanelHeading({ title, subtitle, action, onAction }) {
   return (
     <div className="panel-heading">
-
       <div>
         <h3>{title}</h3>
         <p>{subtitle}</p>
@@ -1042,7 +1169,6 @@ function PanelHeading({ title, subtitle, action, onAction }) {
           {action}
         </button>
       )}
-
     </div>
   );
 }
@@ -1050,7 +1176,6 @@ function PanelHeading({ title, subtitle, action, onAction }) {
 function SearchRow({ count, noun, value, onChange, placeholder }) {
   return (
     <div className="role-search-row">
-
       <span>
         {count} {noun}
       </span>
@@ -1061,7 +1186,6 @@ function SearchRow({ count, noun, value, onChange, placeholder }) {
         placeholder={placeholder}
         aria-label={placeholder}
       />
-
     </div>
   );
 }
@@ -1077,13 +1201,11 @@ function CourseGrid({ items = [] }) {
 
   return (
     <div className="role-course-grid">
-
       {items.map((course, index) => (
         <article
           className="role-course-card"
           key={course.id ?? course.code}
         >
-
           <div className={`role-course-icon tone-${index}`}>
             <BookOpen size={21} />
           </div>
@@ -1102,64 +1224,83 @@ function CourseGrid({ items = [] }) {
             <span>Credits</span>
             <strong>{course.credits ?? "—"}</strong>
           </div>
-
         </article>
       ))}
-
     </div>
   );
 }
 
 // --------------------------------------------------
-// ASSIGNMENT TABLE
+// ASSIGNMENT LIST
 // --------------------------------------------------
 
-function AssignmentTable({ items }) {
+function AssignmentList({ items = [] }) {
+  if (items.length === 0) {
+    return <p className="role-note">Nothing found.</p>;
+  }
+
   return (
     <div className="activity-table-wrapper">
-
       <table className="activity-table role-table">
-
         <thead>
           <tr>
             <th>Assignment</th>
-            <th>Course</th>
             <th>Due Date</th>
+            <th>Submitted Date</th>
             <th>Status</th>
+            <th>Grade</th>
           </tr>
         </thead>
 
         <tbody>
+          {items.map((item, index) => {
+            const grade = item.grade;
 
-          {items.map((item) => (
-            <tr key={item.title}>
+            const marks =
+              grade && typeof grade === "object"
+                ? grade.marks
+                : item.marks;
 
-              <td>{item.title}</td>
-              <td>{item.course}</td>
+            const outOf =
+              grade && typeof grade === "object"
+                ? grade.out_of
+                : item.out_of;
 
-              <td>
-                <span className="role-due">
-                  <Clock3 size={14} />
-                  {item.due}
-                </span>
-              </td>
+            const letter =
+              grade && typeof grade === "object"
+                ? grade.letter
+                : item.letter;
 
-              <td>
-                <span
-                  className={`activity-status ${
-                    item.status === "Submitted" ? "completed" : "pending"
-                  }`}
-                >
-                  {item.status}
-                </span>
-              </td>
+            const hasGrade = grade != null || marks != null;
 
-            </tr>
-          ))}
+            return (
+              <tr key={item.id ?? `${item.title}-${index}`}>
+                <td>{item.title}</td>
+                <td>{item.due_date || "—"}</td>
+                <td>{item.submitted_date || "—"}</td>
 
+                <td>
+                  <span
+                    className={`activity-status ${String(item.status || "")
+                      .toLowerCase()
+                      .replaceAll(" ", "-")}`}
+                  >
+                    {item.status || "—"}
+                  </span>
+                </td>
+
+                <td>
+                  {!hasGrade
+                    ? "Not graded yet"
+                    : `${marks ?? "—"} / ${outOf ?? "—"}${
+                        letter ? ` (${letter})` : ""
+                      }`}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-
     </div>
   );
 }
@@ -1170,16 +1311,17 @@ function AssignmentTable({ items }) {
 
 function GradesPanel({
   onView,
-  items = grades,
+  items = [],
+  loading = false,
+  error = "",
   searchValue,
   onSearchChange,
 }) {
   return (
     <section className="dashboard-panel role-panel">
-
       <PanelHeading
-        title="Recent Grades"
-        subtitle="Your latest academic performance"
+        title="Grades"
+        subtitle="Your academic performance"
         action={onView ? "View report" : undefined}
         onAction={onView}
       />
@@ -1190,38 +1332,40 @@ function GradesPanel({
           noun="grades"
           value={searchValue}
           onChange={onSearchChange}
-          placeholder="Search grades or courses..."
+          placeholder="Search course or faculty..."
         />
       )}
 
-      <div className="role-grade-list">
+      {loading ? (
+        <p className="role-note">Loading grades...</p>
+      ) : error ? (
+        <p className="role-error">{error}</p>
+      ) : items.length === 0 ? (
+        <p className="role-note">Nothing found.</p>
+      ) : (
+        <div className="activity-table-wrapper">
+          <table className="activity-table role-table">
+            <thead>
+              <tr>
+                <th>Course Name</th>
+                <th>Faculty Name</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
 
-        {items.map((grade) => (
-          <Grade key={grade.name} {...grade} />
-        ))}
-
-      </div>
-
-      {items.length === 0 && (
-        <p className="role-note">No grades found.</p>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={item.id ?? `${item.course_name}-${index}`}>
+                  <td>{item.course_name}</td>
+                  <td>{item.faculty_name}</td>
+                  <td>{item.grade ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-
     </section>
-  );
-}
-
-function Grade({ name, course, score }) {
-  return (
-    <div className="role-grade-row">
-
-      <div>
-        <strong>{name}</strong>
-        <span>{course}</span>
-      </div>
-
-      <b>{score}</b>
-
-    </div>
   );
 }
 
@@ -1231,9 +1375,12 @@ function Grade({ name, course, score }) {
 
 function SchedulePanel({
   full = false,
-  items = scheduleItems,
+  items = [],
+  loading = false,
+  error = "",
   searchValue,
   onSearchChange,
+  onView,
 }) {
   return (
     <section
@@ -1241,10 +1388,11 @@ function SchedulePanel({
         full ? "role-full-panel" : ""
       }`}
     >
-
       <PanelHeading
-        title="Today's Schedule"
-        subtitle="Your classes for today"
+        title="Class Schedule"
+        subtitle="Your scheduled classes"
+        action={onView ? "View all" : undefined}
+        onAction={onView}
       />
 
       {onSearchChange && (
@@ -1253,34 +1401,44 @@ function SchedulePanel({
           noun="classes"
           value={searchValue}
           onChange={onSearchChange}
-          placeholder="Search classes or rooms..."
+          placeholder="Search course, faculty or room..."
         />
       )}
 
-      {items.map((schedule) => (
-        <Schedule key={schedule.title} {...schedule} />
-      ))}
+      {loading ? (
+        <p className="role-note">Loading schedule...</p>
+      ) : error ? (
+        <p className="role-error">{error}</p>
+      ) : items.length === 0 ? (
+        <p className="role-note">Nothing found.</p>
+      ) : (
+        items.map((item, index) => (
+          <div
+            className="role-schedule-row"
+            key={
+              item.id ??
+              `${item.course_code}-${item.start_time}-${index}`
+            }
+          >
+            <span>
+              {item.start_time} – {item.end_time}
+            </span>
 
-      {items.length === 0 && (
-        <p className="role-note">No classes found.</p>
+            <div>
+              <strong>
+                {item.course_name}
+                {item.course_code ? ` (${item.course_code})` : ""}
+              </strong>
+
+              <small>
+                {item.faculty_name || "Faculty not assigned"}
+                {item.room ? ` · ${item.room}` : ""}
+              </small>
+            </div>
+          </div>
+        ))
       )}
-
     </section>
-  );
-}
-
-function Schedule({ time, title, room }) {
-  return (
-    <div className="role-schedule-row">
-
-      <span>{time}</span>
-
-      <div>
-        <strong>{title}</strong>
-        <small>{room}</small>
-      </div>
-
-    </div>
   );
 }
 
@@ -1291,7 +1449,6 @@ function Schedule({ time, title, room }) {
 function Announcement({ title, detail }) {
   return (
     <div className="role-announcement">
-
       <Bell size={19} />
 
       <div>
@@ -1300,7 +1457,6 @@ function Announcement({ title, detail }) {
       </div>
 
       <ArrowUpRight size={16} />
-
     </div>
   );
 }

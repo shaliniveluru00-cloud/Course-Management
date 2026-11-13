@@ -38,6 +38,7 @@ function Sidebar({ activeItem, onNavigate, role   }) {
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "My Courses", icon: BookOpen },
     { name: "Students", icon: Users },
+    { name: "Enrollment Requests", icon: ClipboardList },
     { name: "Assignments", icon: FileText },
     { name: "Grades", icon: Award },
     { name: "Schedule", icon: CalendarDays },
