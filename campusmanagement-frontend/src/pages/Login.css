@@ -501,11 +501,26 @@ input {
 }
 
 .admin-contact {
+  margin-top: 22px;
+
   text-align: center;
 
   color: #747b8b;
 
   font-size: 14px;
+}
+
+
+.admin-site-link {
+  color: #f97316;
+
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.admin-site-link:hover {
+  text-decoration: underline;
 }
 
 

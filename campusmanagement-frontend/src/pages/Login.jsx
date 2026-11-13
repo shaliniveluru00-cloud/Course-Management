@@ -7,7 +7,6 @@ import {
   EyeOff,
   UserRound,
   BriefcaseBusiness,
-  ShieldCheck,
   ArrowRight,
   GraduationCap,
   Landmark
@@ -217,18 +216,6 @@ function Login({ onLogin }) {
                   Faculty
                 </button>
 
-
-                <button
-                  type="button"
-                  className={`role-button ${
-                    role === "Admin" ? "active" : ""
-                  }`}
-                  onClick={() => setRole("Admin")}
-                >
-                  <ShieldCheck size={20} />
-                  Admin
-                </button>
-
               </div>
 
             </div>
@@ -279,6 +266,18 @@ function Login({ onLogin }) {
             </button>
 
           </form>
+
+          {/* ADMINISTRATORS USE THE DJANGO ADMIN SITE */}
+
+          <p className="admin-contact">
+            Administrator?{" "}
+            <a
+              className="admin-site-link"
+              href="http://localhost:8000/admin/"
+            >
+              Open the admin site
+            </a>
+          </p>
 
         </div>
 

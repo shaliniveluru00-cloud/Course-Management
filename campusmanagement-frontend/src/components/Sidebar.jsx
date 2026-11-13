@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Users,
-  GraduationCap,
   BookOpen,
   ClipboardList,
   FileText,
@@ -16,16 +15,6 @@ import {
 import "./Sidebar.css";
 
 function Sidebar({ activeItem, onNavigate, role   }) {
-  const adminItems = [
-    { name: "Dashboard", icon: LayoutDashboard },
-    { name: "Students", icon: Users },
-    { name: "Faculty", icon: GraduationCap },
-    { name: "Courses", icon: BookOpen },
-    { name: "Enrollments", icon: ClipboardList },
-    { name: "Assignments", icon: FileText },
-    { name: "Grades", icon: Award },
-    { name: "Reports", icon: BarChart3 }
-  ];
   const studentItems = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "My Courses", icon: BookOpen },
@@ -44,8 +33,8 @@ function Sidebar({ activeItem, onNavigate, role   }) {
     { name: "Schedule", icon: CalendarDays },
     { name: "Reports", icon: BarChart3 }
   ];
-  const menuItems = role === "Student" ? studentItems : role === "Faculty" ? facultyItems : adminItems;
-  const portalName = role === "Admin" ? "Administration" : `${role} Portal`;
+  const menuItems = role === "Faculty" ? facultyItems : studentItems;
+  const portalName = `${role} Portal`;
 
   return (
     <aside className="sidebar">

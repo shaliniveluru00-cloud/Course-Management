@@ -7,7 +7,9 @@ import {
   useNavigate
 } from "react-router-dom";
 
-import AdminDashboard from "./pages/AdminDashboard";
+// Layout styles shared by the Student and Faculty dashboards (the admin page is gone;
+// admins use the Django admin site at http://localhost:8000/admin/)
+import "./pages/AdminDashboard.css";
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
 import Login from "./pages/Login";
@@ -38,8 +40,6 @@ function LoginRoute() {
       navigate("/student");
     } else if (role === "FACULTY") {
       navigate("/faculty");
-    } else if (role === "ADMIN") {
-      navigate("/admin");
     } else {
       console.error("Unknown user role:", role);
     }
@@ -87,15 +87,6 @@ function AppRoutes() {
         element={
           <Protected role="FACULTY">
             <FacultyDashboard onLogout={handleLogout} />
-          </Protected>
-        }
-      />
-
-      <Route
-        path="/admin"
-        element={
-          <Protected role="ADMIN">
-            <AdminDashboard onLogout={handleLogout} />
           </Protected>
         }
       />
