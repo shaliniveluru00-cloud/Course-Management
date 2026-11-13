@@ -107,6 +107,16 @@ function formatTime(value) {
   return `${String(displayHour).padStart(2, "0")}:${minutes} ${suffix}`;
 }
 
+// Calculate the result from the grade:
+// F = Fail; any other non-empty grade = Pass.
+// Students without a grade are not included in pass/fail totals.
+function getStudentResult(student) {
+  const grade = String(student.grade ?? "").trim().toUpperCase();
+
+  if (!grade) return "Not available";
+  return grade === "F" ? "Fail" : "Pass";
+}
+
 function FacultyDashboard({ onLogout }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -535,7 +545,7 @@ function FacultyDashboard({ onLogout }) {
   );
 
   const filteredPreviousStudents = previousStudents.filter((student) =>
-    `${student.name} ${student.roll_no} ${student.department} ${student.grade}`
+    `${student.name} ${student.roll_no} ${student.department || student.branch || ""} ${student.grade}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -924,92 +934,139 @@ function FacultyDashboard({ onLogout }) {
             />
           )}
 
-          {/* REPORTS */}
-          {activeItem === "Reports" && (
-            <section className="dashboard-panel role-panel">
+         
+{/* REPORTS */}
+{activeItem === "Reports" && (
+  <section className="dashboard-panel role-panel">
 
-              <PanelHeading
-                title="Teaching Reports"
-                subtitle="Individual academic summaries for your assigned courses"
-              />
+    {!gradeView || !selectedGradeCourse ? (
+      <>
+        <PanelHeading
+          title="Reports"
+          subtitle="Academic performance reports for completed courses"
+        />
 
-              {courses.length === 0 ? (
-                <p className="role-note">
-                  No course reports are available.
-                </p>
-              ) : (
-                <div className="role-class-grid">
+        <div className="faculty-course-section">
+          <h3 className="completed-courses-heading">
+            Completed Courses
+          </h3>
 
-                  {courses.map((course) => (
-                    <article
-                      className="role-class-card"
-                      key={course.code}
-                    >
-
-                      <div className="role-class-top">
-
-                        <span className="role-course-code">
-                          {course.code}
-                        </span>
-
-                        <span className="role-class-count">
-                          <Users size={14} />
-                          {course.enrolled_count ?? 0} students
-                        </span>
-
-                      </div>
-
-                      <h3>{course.name}</h3>
-
-                      <div className="role-course-report-details">
-
-                        <p>
-                          <BookOpen size={14} />
-                          Credits: {course.credits ?? "—"}
-                        </p>
-
-                        <p>
-                          <Users size={14} />
-                          Enrolled: {course.enrolled_count ?? 0}
-                        </p>
-
-                        <p>
-                          <GraduationCap size={14} />
-                          Capacity: {course.capacity ?? "—"}
-                        </p>
-
-                        <p>
-                          <CheckCircle2 size={14} />
-                          Seats remaining: {course.seats_left ?? "—"}
-                        </p>
-
-                        <p>
-                          <ClipboardCheck size={14} />
-                          Pending requests: {course.pending_requests ?? 0}
-                        </p>
-
-                      </div>
-
-                      <button
-                        className="role-text-button"
-                        onClick={() =>
-                          navigateToCourseStudents(course)
-                        }
-                      >
-                        View Course Students
-                        <ArrowUpRight size={15} />
-                      </button>
-
-                    </article>
-                  ))}
-
-                </div>
-              )}
-
-            </section>
+          {previousCourses.length === 0 ? (
+            <p className="role-note">
+              No completed courses are available.
+            </p>
+          ) : (
+            <div className="report-course-list">
+              {previousCourses.map((course) => (
+                <button
+                  key={course.code}
+                  className="report-course-button"
+                  onClick={() => openPreviousCourse(course)}
+                >
+                  <span>{course.name}</span>
+                  <ArrowUpRight size={19} />
+                </button>
+              ))}
+            </div>
           )}
+        </div>
+      </>
+    ) : (
+      <>
+        <PanelHeading
+          title={selectedGradeCourse.name}
+          subtitle={`Course Code: ${selectedGradeCourse.code}`}
+          action="Back to Completed Courses"
+          onAction={() => {
+            setGradeView(false);
+            setSelectedGradeCourse(null);
+            setPreviousStudents([]);
+            setSearch("");
+          }}
+        />
 
-          
+        {(() => {
+          const gradedStudents = previousStudents.filter(
+            (student) =>
+              student.grade != null &&
+              String(student.grade).trim() !== ""
+          );
+
+          const passed = gradedStudents.filter(
+            (student) =>
+              String(student.grade).trim().toUpperCase() !== "F"
+          ).length;
+
+          const failed = gradedStudents.filter(
+            (student) =>
+              String(student.grade).trim().toUpperCase() === "F"
+          ).length;
+
+          return (
+            <>
+              {/* SUMMARY CARDS */}
+              <div className="report-summary-grid">
+
+                <div className="report-summary-card total">
+                  <div className="report-summary-icon">
+                    <Users size={23} />
+                  </div>
+                  <div>
+                    <h3>{previousStudents.length}</h3>
+                    <p>Total Students</p>
+                  </div>
+                </div>
+
+                <div className="report-summary-card passed">
+                  <div className="report-summary-icon">
+                    <CheckCircle2 size={23} />
+                  </div>
+                  <div>
+                    <h3>{passed}</h3>
+                    <p>Passed</p>
+                  </div>
+                </div>
+
+                <div className="report-summary-card failed">
+                  <div className="report-summary-icon">
+                    <XCircle size={23} />
+                  </div>
+                  <div>
+                    <h3>{failed}</h3>
+                    <p>Failed</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* STUDENT RESULTS */}
+              <div className="faculty-course-section">
+                <PanelHeading
+                  title="Student Results"
+                  subtitle="Individual student grades and branches"
+                />
+
+                <SearchRow
+                  count={filteredPreviousStudents.length}
+                  noun="students"
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by name, roll number, branch or grade..."
+                />
+
+                <PreviousGradeTable
+                  items={filteredPreviousStudents}
+                />
+              </div>
+            </>
+          );
+        })()}
+      </>
+    )}
+
+  </section>
+)}
+
           {/* ASSIGNMENTS */}
           {activeItem === "Assignments" && (
           <section className="dashboard-panel role-panel">
@@ -1651,6 +1708,7 @@ function RequestTable({ items, onDecision, actionLoading }) {
   );
 }
 
+
 // PREVIOUS COURSE GRADES TABLE
 function PreviousGradeTable({ items }) {
   if (!items.length) {
@@ -1663,56 +1721,48 @@ function PreviousGradeTable({ items }) {
 
   return (
     <div className="activity-table-wrapper">
-
       <table className="activity-table role-table">
 
         <thead>
           <tr>
             <th>Roll Number</th>
             <th>Student Name</th>
-            <th>Department</th>
+            <th>Branch</th>
             <th>Grade</th>
             <th>Attendance</th>
-            <th>Status</th>
           </tr>
         </thead>
 
         <tbody>
-          {items.map((student) => (
-            <tr key={student.roll_no}>
+          {items.map((student, index) => {
+            const attendance =
+              student.attendance ??
+              student.attendance_percentage ??
+              student.attendance_percent;
 
-              <td>{student.roll_no}</td>
-              <td>{student.name}</td>
-              <td>{student.department}</td>
-              <td>{student.grade || "—"}</td>
-
-              <td>
-                {student.attendance == null
-                  ? "—"
-                  : `${student.attendance}%`}
-              </td>
-
-              <td>
-                <span
-                  className={`activity-status ${
-                    student.status?.toLowerCase() === "completed"
-                      ? "completed"
-                      : "pending"
-                  }`}
-                >
-                  {student.status || "—"}
-                </span>
-              </td>
-
-            </tr>
-          ))}
+            return (
+              <tr key={student.roll_no || student.id || index}>
+                <td>{student.roll_no || "—"}</td>
+                <td>{student.name || "—"}</td>
+                <td>
+                  {student.department ?? student.branch ?? "—"}
+                </td>
+                <td>{student.grade || "—"}</td>
+                <td>
+                  {attendance == null || attendance === ""
+                    ? "—"
+                    : `${attendance}%`}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
 
       </table>
-
     </div>
   );
 }
+
 
 // FACULTY SCHEDULE
 function SchedulePanel({

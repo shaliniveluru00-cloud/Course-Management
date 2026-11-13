@@ -74,7 +74,12 @@
   color: #95877D;
   margin-top: 3px;
 }
-
+.profile-branch {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-top: 3px;
+}
 @media (max-width: 800px) {
   .top-navbar {
     padding: 15px;

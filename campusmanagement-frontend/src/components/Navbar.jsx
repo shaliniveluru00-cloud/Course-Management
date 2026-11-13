@@ -1,17 +1,23 @@
 
 import { Bell } from "lucide-react";
-
 import "./Navbar.css";
 
 function Navbar({ pageTitle }) {
 
-  // ---- NEW: read the login details saved by the login page ----
+  // Get login details from localStorage
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
+
   const profileName = user?.profile?.name ?? "Guest";
-  // Backend sends "STUDENT" / "FACULTY" / "ADMIN" -> show "Student" / "Faculty" / "Admin"
-  const role = user ? user.role.charAt(0) + user.role.slice(1).toLowerCase() : "";
-  // -------------------------------------------------------------
+
+  // Convert role to proper case
+  const role = user?.role
+    ? user.role.charAt(0) + user.role.slice(1).toLowerCase()
+    : "";
+
+  // Get student's or faculty's branch
+  const branch = user?.profile?.department ?? "";
+
   return (
     <header className="top-navbar">
 
@@ -31,15 +37,24 @@ function Navbar({ pageTitle }) {
           <span className="notification-dot"></span>
         </button>
 
-       <div className="admin-profile">
-          {/* CHANGED: was  A  */}
-          <div className="profile-avatar">{profileName.charAt(0).toUpperCase()}</div>
+        <div className="admin-profile">
+
+          <div className="profile-avatar">
+            {profileName.charAt(0).toUpperCase()}
+          </div>
 
           <div className="profile-details">
-            {/* CHANGED: was  Administrator  */}
             <h4>{profileName}</h4>
-            {/* CHANGED: was  Admin  */}
             <p>{role}</p>
+
+            {/* Display branch for students and faculty */}
+            {(role === "Student" || role === "Faculty") && branch && (
+              <span className="profile-branch">
+                {branch}
+              </span>
+            )}
+            
+
           </div>
 
         </div>
@@ -47,5 +62,5 @@ function Navbar({ pageTitle }) {
     </header>
   );
 }
-   
+
 export default Navbar;

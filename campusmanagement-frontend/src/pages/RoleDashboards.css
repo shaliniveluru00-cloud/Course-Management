@@ -831,3 +831,226 @@ textarea {
     gap: 9px;
   }
 }
+
+/* COMPLETED COURSES REPORTS */
+
+.completed-courses-heading {
+  margin: 25px 0 18px;
+  font-size: 19px;
+  color: #292524;
+}
+
+.report-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-course-button {
+  width: 100%;
+  padding: 19px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #f0dfd1;
+  border-radius: 12px;
+  color: #292524;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  text-align: left;
+}
+
+.report-course-button:hover {
+  border-color: #ed790f;
+  background: #fff8f1;
+  transform: translateY(-2px);
+}
+
+.report-course-button svg {
+  color: #ed790f;
+}
+
+/* PERFORMANCE CHART */
+
+.report-chart-section {
+  background: #fff;
+  border: 1px solid #f0e3d9;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 25px 0;
+}
+
+.report-chart-heading h3 {
+  font-size: 18px;
+  margin: 0 0 5px;
+  color: #292524;
+}
+
+.report-chart-heading p {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.report-chart-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 55px;
+  padding: 25px 10px 10px;
+  flex-wrap: wrap;
+}
+
+.report-pie-chart {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.report-pie-center {
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-pie-center strong {
+  font-size: 29px;
+  color: #292524;
+}
+
+.report-pie-center span {
+  font-size: 12px;
+  color: #888;
+}
+
+.report-chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.report-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-legend-item strong {
+  font-size: 14px;
+  color: #292524;
+}
+
+.report-legend-item p {
+  margin: 4px 0 0;
+  color: #888;
+  font-size: 12px;
+}
+
+.report-legend-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pass-dot {
+  background: #16a34a;
+}
+
+.fail-dot {
+  background: #dc2626;
+}
+
+@media (max-width: 600px) {
+  .report-chart-content {
+    gap: 25px;
+  }
+
+  .report-pie-chart {
+    width: 155px;
+    height: 155px;
+  }
+
+  .report-pie-center {
+    width: 105px;
+    height: 105px;
+  }
+}
+
+/* REPORT SUMMARY CARDS */
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 25px 0;
+}
+
+.report-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 22px;
+  border-radius: 13px;
+  background: #ffffff;
+  border: 1px solid #eee5df;
+}
+
+.report-summary-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.report-summary-card h3 {
+  font-size: 25px;
+  margin: 0 0 4px;
+  color: #292524;
+}
+
+.report-summary-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #777;
+}
+
+/* Total students - neutral orange */
+.report-summary-card.total .report-summary-icon {
+  background: #fff0e3;
+  color: #e8750b;
+}
+
+/* Passed - green */
+.report-summary-card.passed .report-summary-icon {
+  background: #e6f6ec;
+  color: #269653;
+}
+
+/* Failed - red */
+.report-summary-card.failed .report-summary-icon {
+  background: #feeaea;
+  color: #d94343;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .report-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
