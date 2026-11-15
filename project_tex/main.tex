@@ -14,8 +14,8 @@
 Project Report}
 
 \author{
-Premi\\
 Shalini\\
+Premi\\
 Tejaswini\\
 Akshitha\\
 Ridhima Kumari\\[4pt]
@@ -424,18 +424,18 @@ The contribution details are based on the project work and Git history.
 \textbf{Team member} & \textbf{Contribution} \\
 \midrule
 Premi & Backend setup, JWT login, role permissions, student and faculty
-APIs, enrollment rules, admin site, query profiling and merging. \\
+APIs, enrollment rules, admin site,README files. \\
 Shalini & Login page, student dashboard, My Courses page, React
 components, routing, API calls and grades table. \\
 Akshitha & Frontend dashboards, navigation, search, faculty assignment page,
-Bash setup script and course table design. Git accounts combined:
-SaiAkshithaK and Akshitha. \\
+Bash setup script and course table design.( Git accounts combined:
+SaiAkshithaK and Akshitha.) \\
 Ridhima Kumari & User table with hashed passwords, first student API,
 LaTeX project report and Beamer presentation.
   \\
 Tejaswini & Course-related models and migrations, data import commands,
 student assignment, grade and schedule APIs, and students and faculty table
-design. Git accounts combined: Tejaswini-C468 and Chitturi. \\
+design,profiling.( Git accounts combined: Tejaswini-C468 and Chitturi.) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -456,21 +456,32 @@ relationships, Django models, migrations, token-based login, role checking,
 data import, admin pages, performance checking, React, Bash scripting and
 Git collaboration.
 
-\section{Limitations and Future Work}
+\section{Use of AI Assistance}
 
+We used it openly, and we state below where.
+
+\subsection{Where AI was used}
 \begin{itemize}
-    \item Students cannot submit assignments yet. The submissions shown come
-    from sample data.
-    \item Faculty members cannot edit or delete assignments or enter marks yet.
-    \item Announcements are fixed text and are not connected to the backend.
-    \item Login is stored for each browser address, so two different users
-    cannot be logged in using two tabs of the same address.
-    \item The faculty page must be reloaded to show new enrollment requests.
-    \item The tokens are valid for about 100 years for the demonstration. A real
-    system should use a shorter validity period.
-    \item SQLite is suitable for this project size. A larger system may need a
-    server database.
+  \item \textbf{Setup script:} It helped write and debug \texttt{setup.sh} and the
+        Windows instructions.
+  \item \textbf{Profiling:} It wrote the measurement scripts and helped read the
+        results. It also suggested two fixes for the slow admin pages, and both
+        fixes reduce the number of database queries.
+  \item \textbf{Documentation:} It helped write and tidy the README files.
+  \item \textbf{Learning:} It explained how login, tokens, enrollment and the admin
+        site work, so that team members could understand the system and present it.
+  \item \textbf{This report:} It helped draft the structure and the \LaTeX{} code.
 \end{itemize}
+
+\subsection{What the team did}
+The team chose the topic and the features, decided the business rules (for example,
+the department rule for enrolling and the 60\% attendance rule), and designed the
+database. We also ran and tested the system and decided what to keep.
+
+\subsection{Understanding of the code}
+Team members have different levels of understanding of different parts of the
+project. To close the gaps, we used the AI to explain the system step by step, and
+we prepared the presentation so that each member of the team understands what is happening in the project.
 
 \section{Conclusion}
 
@@ -485,7 +496,7 @@ the frontend, backend, APIs and database work together.
 
 \begin{itemize}
     \item Repository:
-    \texttt{https://github.com/}\\\texttt{shaliniveluru00-cloud/Course-Management}
+    \texttt{https://github.com/shaliniveluru00-cloud/Course-Management}
     \item Backend documentation:
     \texttt{campusmanagement-backend/README.md}
     \item Frontend documentation:
