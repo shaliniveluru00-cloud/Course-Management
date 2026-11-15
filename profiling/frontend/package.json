@@ -1,0 +1,9 @@
+{
+  "name": "frontend-profiling",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "lighthouse": "^13.6.0",
+    "puppeteer-core": "^25.17.0"
+  }
+}
