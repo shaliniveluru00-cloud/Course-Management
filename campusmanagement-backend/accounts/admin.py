@@ -6,6 +6,7 @@ pages from our models; this file only chooses which columns, search boxes and fi
 """
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import Count
 
 from .models import Faculty, Student, User
 
@@ -103,9 +104,13 @@ class FacultyAdmin(admin.ModelAdmin):
     list_select_related = ("user",)
     actions = [deactivate_accounts, activate_accounts]
 
-    @admin.display(description="Courses")
+    def get_queryset(self, request):
+        # Count every faculty member's courses in the same query (not one query per row)
+        return super().get_queryset(request).annotate(course_count=Count("courses"))
+
+    @admin.display(description="Courses", ordering="course_count")
     def number_of_courses(self, faculty):
-        return faculty.courses.count()
+        return faculty.course_count
 
     @admin.display(boolean=True, description="Can log in", ordering="user__is_active")
     def login_active(self, faculty):

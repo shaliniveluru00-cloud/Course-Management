@@ -199,7 +199,9 @@ class GradeAdmin(admin.ModelAdmin):
     )
     list_filter = ("letter_grade", "submission__assignment__course")
     autocomplete_fields = ("submission",)
-    list_select_related = ("submission__student", "submission__assignment")
+    # "assignment__course" is needed too: each grade's label shows the course code,
+    # and without it Django runs one extra query per row
+    list_select_related = ("submission__student", "submission__assignment__course")
 
     @admin.display(description="Student", ordering="submission__student__name")
     def student(self, grade):
